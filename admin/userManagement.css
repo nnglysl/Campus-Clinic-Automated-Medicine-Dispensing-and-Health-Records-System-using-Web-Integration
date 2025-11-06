@@ -1,0 +1,504 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  font-family: 'DM Serif Text', serif;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.user-tabs {
+  margin-bottom: 25px;
+}
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.role-badge {
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.role-admin {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.role-doctor {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.role-nurse {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.role-staff {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 15px;
+}
+
+.modal-header {
+  background: #6b0d00;
+  color: white;
+}
+
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+.form-label {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Profile Photo Styles */
+.employee-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #6b0000;
+  display: block;
+  margin: 0 auto;
+}
+
+.photo-preview-container {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+}
+
+.employee-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+#photoPlaceholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}
+
+.employee-photo-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+#viewPhotoContainer {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 15px auto;
+  border-radius: 50%;
+  background-color: #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid #5c0a0a;
+}
+
+#viewEmployeePhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: none;
+}
+
+#photoPlaceholder {
+  font-size: 50px;
+  color: white;
+}
+
+/* Availability Badge Styles */
+.availability-badge {
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.availability-in {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.availability-out {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.availability-break {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* Schedule Card Styles */
+.schedule-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-left: 4px solid #6b0d00;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.schedule-day {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 2px;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.schedule-day.active-day {
+  background: #6b0d00;
+  color: white;
+}
+
+.time-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+/* Employee Schedule Row Styles */
+.employee-schedule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  margin-bottom: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+  border-left: 3px solid #6b0d00;
+}
+
+.employee-schedule-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.employee-schedule-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.employee-schedule-details {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex: 2;
+}
+
+.schedule-table {
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Schedule Filter Styles */
+.schedule-filters {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 20px;
+}
+
+.schedule-filters .form-label {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.schedule-filters .form-select,
+.schedule-filters .form-control {
+  font-size: 0.95rem;
+  border: 1px solid #ced4da;
+  transition: all 0.3s;
+}
+
+.schedule-filters .form-select:focus,
+.schedule-filters .form-control:focus {
+  border-color: #6b0d00;
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
+}
+
+/* Date Group Header Styles */
+.date-group-header {
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%);
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.date-group-header h6 {
+  color: white;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.date-group-header .badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+/* Spinner Animation for Refresh Button */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+  animation: spinner-border 0.75s linear infinite;
+  display: inline-block;
+  vertical-align: text-bottom;
+  border: 0.15em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Search Input Focus Effect */
+#scheduleSearch:focus {
+  border-color: #6b0d00;
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
+}
+
+/* Schedule Count Badge */
+#scheduleCount {
+  font-size: 0.9rem;
+  padding: 8px 15px;
+  font-weight: 600;
+}
+
+/* Responsive Schedule Display */
+@media (max-width: 992px) {
+  .employee-schedule-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .employee-schedule-info {
+    margin-bottom: 15px;
+    width: 100%;
+  }
+  
+  .employee-schedule-details {
+    width: 100%;
+  }
+  
+  .schedule-table {
+    flex-direction: column;
+  }
+  
+  .schedule-table > div {
+    border-right: none !important;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .schedule-table > div:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-filters .row {
+    gap: 15px;
+  }
+  
+  .schedule-filters .col-md-3,
+  .schedule-filters .col-md-4,
+  .schedule-filters .col-md-2 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Empty State Styles */
+.text-center.py-5 {
+  padding: 3rem 1rem !important;
+}
+
+.text-center.py-5 i {
+  opacity: 0.5;
+}
+
+.text-center.py-5 p {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+/* Button Hover Effects */
+.btn-outline-success:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.btn-primary {
+  background-color: #6b0d00;
+  border-color: #6b0d00;
+}
+
+.btn-primary:hover {
+  background-color: #8b1a00;
+  border-color: #8b1a00;
+}
+
+/* DataTables Custom Styling */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #6b0d00 !important;
+  border-color: #6b0d00 !important;
+  color: white !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #8b1a00 !important;
+  border-color: #8b1a00 !important;
+  color: white !important;
+}
+
+/* Tab Styling */
+.nav-tabs .nav-link {
+  color: #495057;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 12px 20px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom-color: #6b0d00;
+  color: #6b0d00;
+}
+
+.nav-tabs .nav-link.active {
+  border-bottom-color: #6b0d00;
+  color: #6b0d00;
+  background: transparent;
+}
+
+/* Form Control Enhancements */
+.form-control:focus,
+.form-select:focus {
+  border-color: #6b0d00;
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
+}
+
+/* Schedule Info Typography */
+.employee-schedule-info strong {
+  font-size: 1rem;
+  color: #212529;
+}
+
+.employee-schedule-info .text-muted {
+  font-size: 0.875rem;
+}
+
+/* Schedule Details Small Text */
+.employee-schedule-details small {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Improve Border Styling */
+.schedule-table .border-end {
+  border-right: 1px solid #dee2e6 !important;
+}
+
+/* Disabled Input Styling */
+input[type="date"]:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}

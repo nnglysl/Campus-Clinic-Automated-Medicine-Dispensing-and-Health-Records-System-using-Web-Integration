@@ -1,0 +1,219 @@
+  body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ============================
+       MY HEALTH RECORDS PAGE
+       ============================ */
+
+    /* Page Background + Layout */
+    .content-demo {
+      flex: 1;
+      padding: 40px;
+      background-color: #dddddd;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: calc(100vh - 100px);
+      overflow: hidden;
+    }
+
+    /* Page Title and Button */
+    .content-demo h2 {
+      color: #800000;
+      font-weight: 700;
+    }
+
+    /* Buttons */
+    .btn-danger {
+      background-color: #960f16;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      background-color: #b30000;
+    }
+
+    .back-button {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .back-button:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    /* Section Subtitles */
+    .text-secondary {
+      color: #800000 !important;
+      font-weight: 600;
+    }
+
+    /* ============================
+       SCROLLABLE RECORD VIEW
+       ============================ */
+
+    .record-view-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Back Button Bar (sticky) */
+    .back-button-container {
+      background-color: #dddddd;
+      padding: 12px 20px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #ccc;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    /* Scrollable Record Area */
+    .record-scroll-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Custom Scrollbar */
+    .record-scroll-container::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .record-scroll-container::-webkit-scrollbar-thumb {
+      background-color: #aaa;
+      border-radius: 5px;
+    }
+
+    .record-scroll-container::-webkit-scrollbar-thumb:hover {
+      background-color: #888;
+    }
+
+    /* ============================
+       MEDICAL RECORD PAGE STYLES
+       ============================ */
+
+    .medical-record-page {
+      background: white;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 50px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      font-family: 'Times New Roman', serif;
+    }
+
+    .record-header {
+      text-align: center;
+      border-bottom: 3px solid #800000;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .record-header h2 {
+      color: #800000;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .record-header p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+
+    .patient-info-section {
+      background: #f8f9fa;
+      border: 2px solid #800000;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .patient-info-section h5 {
+      color: #800000;
+      font-weight: bold;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #800000;
+      padding-bottom: 5px;
+    }
+
+    .info-row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .info-label-medical {
+      font-weight: bold;
+      width: 180px;
+      color: #333;
+    }
+
+    .info-value-medical {
+      flex: 1;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
+    }
+
+    .section-title {
+      color: #800000;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #800000;
+      padding-bottom: 5px;
+    }
+
+    .vital-signs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .vital-item {
+      background: #f8f9fa;
+      padding: 10px;
+      border-left: 4px solid #800000;
+    }
+
+    .vital-label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .vital-value {
+      font-size: 18px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    .diagnosis-box,
+    .medication-box,
+    .notes-box {
+      background: #fff;
+      border: 2px solid #ddd;
+      padding: 15px;
+      margin-bottom: 20px;
+      min-height: 80px;
+    }
+
+    /* Physician signature area */
+    .medical-record-page .text-end p {
+      margin-bottom: 0;
+    }
+
+    /* Card styles */
+    .card {
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+    }
