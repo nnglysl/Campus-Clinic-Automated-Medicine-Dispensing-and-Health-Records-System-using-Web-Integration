@@ -280,7 +280,6 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <a href="../admin/patients.php" class="menu-item">Patient</a>
         <a href="../admin/userManagement.php" class="menu-item active">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
-        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
       <div class="user-profile">
