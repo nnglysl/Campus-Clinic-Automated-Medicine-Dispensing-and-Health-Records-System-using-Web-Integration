@@ -1,471 +1,474 @@
-/* ===== GLOBAL RESET ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ===== MAIN CONTENT AREA ===== */
-.content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 30px;
-}
-
-/* =========================================================
-   CALENDAR CONTAINER
-   ========================================================= */
-.calendar-container {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 95%;
-  max-width: 1100px;
-  margin: auto;
-}
-
-/* Header Section */
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.calendar-header h2 {
-  color: #800000;
-  font-weight: 700;
-  font-size: 22px;
-}
-
-.calendar-header button {
-  background: #800000;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.calendar-header button:hover {
-  background: #a01300;
-}
-
-/* =========================================================
-   CALENDAR GRID
-   ========================================================= */
-.weekdays,
-.days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  gap: 5px;
-}
-
-.weekdays span {
-  font-weight: bold;
-  background: #800000;
-  color: white;
-  padding: 10px 0;
-  border-radius: 4px;
-}
-
-.days button {
-  border: 1px solid #ddd;
-  padding: 18px 0;
-  border-radius: 8px;
-  background: #ffffff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1em;
-}
-
-.days button:hover {
-  background: #fff2f2;
-  border-color: #800000;
-}
-
-.days button.selected {
-  background: #800000;
-  color: white;
-  font-weight: 600;
-}
-
-/* =========================================================
-   MODAL STYLING
-   ========================================================= */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-box {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  width: 400px;
-  max-width: 90%;
-  text-align: center;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-}
-
-.modal-box h3 {
-  color: #800000;
-  margin-bottom: 15px;
-  font-weight: 700;
-}
-
-/* Time Buttons */
-.time-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin: 15px 0;
-}
-
-.time-buttons button {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.time-buttons button:hover {
-  background: #fff2f2;
-  border-color: #800000;
-}
-
-.time-buttons button.selected {
-  background: #800000;
-  color: white;
-}
-
-/* Modal Action Buttons */
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.modal-actions button {
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-#closeModal {
-  background: #ccc;
-}
-
-#closeModal:hover {
-  background: #b3b3b3;
-}
-
-#confirmTime {
-  background: #800000;
-  color: white;
-}
-
-#confirmTime:hover {
-  background: #a01300;
-}
-
-#confirmTime:disabled {
-  background: #999;
-  cursor: not-allowed;
-}
-
-/* =========================================================
-   SIDEBAR ACTIVE LINK
-   ========================================================= */
-
-
-.content-demo {
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  min-height: 85vh;
-}
-
-.card {
-  border-radius: 10px;
-}
-
-.btn-danger {
-  background-color: #b30000;
-  border: none;
-}
-
-.btn-danger:hover {
-  background-color: #8c0000;
-}
-
-.list-group-item {
-  border: none;
-  border-bottom: 1px solid #eee;
-}
-
-@media (max-width: 768px) {
-  .card {
-    padding: 1.5rem !important;
-  }
-  .content-demo {
-    padding: 1rem !important;
-  }
-}
-/* APPOINTMENT PAGE STYLES */
-.calendar-container {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 95%;
-  max-width: 1100px;
-  margin: auto;
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.calendar-header button {
-  background: #800000;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.calendar-header button:hover {
-  background: #a01300;
-}
-
-.weekdays, .days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  text-align: center;
-}
-
-.weekdays span {
-  font-weight: bold;
-  background: #800000;
-  color: white;
-  padding: 10px 0;
-  border-radius: 4px;
-}
-
-.days button {
-  border: 1px solid #ddd;
-  padding: 15px 0;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.days button:hover {
-  background: #fff2f2;
-  border-color: #800000;
-}
-
-.booked-day {
-  background: #ffeaea;
-  border-color: #800000;
-  color: #800000;
-}
-
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-box {
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  width: 400px;
-  max-width: 90%;
-  text-align: center;
-}
-
-.time-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.time-buttons button {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.time-buttons button.selected {
-  background: #800000;
-  color: white;
-}
-
-.booked-slot {
-  background: #eee;
-  color: #888;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .calendar-container {
-    padding: 20px;
-  }
-  .modal-box {
-    width: 90%;
-  }
-}
-.text-maroon { color: #800000; }
-.btn-maroon { background: #800000; color: white; }
-.btn-maroon:hover { background: #a01300; }
-
-.calendar-container {
-  background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  max-width: 1100px;
-  margin: auto;
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.calendar-header button {
-  background: #800000;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.weekdays, .days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  gap: 6px;
-}
-
-.weekdays span {
-  background: #800000;
-  color: white;
-  font-weight: bold;
-  padding: 10px 0;
-  border-radius: 5px;
-}
-
-.days button {
-  border: 1px solid #ddd;
-  padding: 18px 0;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.days button.available:hover {
-  background: #fff2f2;
-  border-color: #800000;
-}
-
-.days button.full {
-  background: #ffe0e0;
-  color: #800000;
-  cursor: not-allowed;
-}
-
-.days button.booked {
-  background: #800000;
-  color: white;
-}
-
-.legend {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.legend-box {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 5px;
-  border-radius: 4px;
-}
-
-.legend-box.available { background: #e9ffe9; border: 1px solid #00aa00; }
-.legend-box.full { background: #ffe0e0; border: 1px solid #cc0000; }
-.legend-box.booked { background: #800000; border: 1px solid #800000; }
-
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-box {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  width: 400px;
-  text-align: center;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
+    
+    /* Department Selection Styles */
+    .department-selection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 600px;
+      padding: 40px;
+      background: white;
+      margin: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .department-selection h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .department-selection p {
+      color: #666;
+      margin-bottom: 50px;
+      font-size: 1.1rem;
+    }
+    
+    .department-buttons {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .department-btn {
+      width: 280px;
+      height: 200px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .department-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    
+    .department-btn.dental:hover {
+      border-color: #42a5f5;
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    
+    .department-btn.medical:hover {
+      border-color: #66bb6a;
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    }
+    
+    .department-btn i {
+      font-size: 4rem;
+      color: #999;
+      transition: all 0.3s ease;
+    }
+    
+    .department-btn.dental:hover i {
+      color: #1976d2;
+    }
+    
+    .department-btn.medical:hover i {
+      color: #388e3c;
+    }
+    
+    .department-btn h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    
+    .department-btn p {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0;
+    }
+    
+    /* Calendar Container - Hidden by default */
+    .appointment-container {
+      display: none;
+      background: white;
+      margin: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-height: 600px;
+    }
+    
+    .appointment-container.active {
+      display: flex;
+    }
+    
+    .appointment-container.dental {
+      border-top: 4px solid #1976d2;
+    }
+    
+    .appointment-container.medical {
+      border-top: 4px solid #388e3c;
+    }
+    
+    .sync-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: #4caf50;
+      color: white;
+      border-radius: 6px;
+      display: none;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .sync-indicator.syncing { display: block; background: #2196f3; }
+    .sync-indicator.success { display: block; background: #4caf50; }
+    .sync-indicator.error { display: block; background: #f44336; }
+    .sync-indicator i { margin-right: 8px; }
+    
+    .date-section {
+      width: 45%;
+      padding: 30px;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .date-section h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .dental .date-section h3 { color: #1976d2; }
+    .medical .date-section h3 { color: #388e3c; }
+    
+    .date-section .subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    
+    .department-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    
+    .dental .department-badge {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    
+    .medical .department-badge {
+      background: #e8f5e9;
+      color: #388e3c;
+    }
+    
+    .back-to-selection {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+    
+    .back-to-selection:hover {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .last-updated {
+      color: #999;
+      font-size: 0.75rem;
+      display: block;
+      margin-top: 5px;
+    }
+    
+    .calendar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .calendar-controls button {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #666;
+      padding: 5px 10px;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    
+    .calendar-header {
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.7rem;
+      color: #666;
+      padding: 6px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #333;
+      background: transparent;
+      border: none;
+      transition: all 0.2s;
+      position: relative;
+      font-weight: 500;
+      min-height: 36px;
+      max-height: 40px;
+    }
+    
+    .calendar-day:hover:not(.disabled):not(.other-month):not(.fully-booked) {
+      background: #f0f0f0;
+    }
+    
+    .dental .calendar-day.selected {
+      background: #1976d2;
+      color: white;
+      font-weight: 700;
+    }
+    
+    .medical .calendar-day.selected {
+      background: #388e3c;
+      color: white;
+      font-weight: 700;
+    }
+    
+    .calendar-day.today {
+      background: #e3f2fd;
+      font-weight: 700;
+    }
+    
+    .calendar-day.other-month { 
+      color: #ccc; 
+      cursor: default;
+      font-weight: 400;
+    }
+    
+    .calendar-day.disabled { 
+      color: #ccc; 
+      cursor: not-allowed;
+      font-weight: 400;
+    }
+    
+    /* Green for available, Red for fully booked */
+    .calendar-day.available { 
+      background: #90EE90;
+      color: #1b5e20;
+      font-weight: 700;
+    }
+    
+    .calendar-day.available:hover {
+      background: #7CCD7C;
+    }
+    
+    .calendar-day.partially-available { 
+      background: #90EE90;
+      color: #1b5e20;
+      font-weight: 700;
+    }
+    
+    .calendar-day.partially-available:hover {
+      background: #7CCD7C;
+    }
+    
+    .calendar-day.fully-booked { 
+      background: transparent;
+      color: #8B0000;
+      font-weight: 700;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    
+    .calendar-day.unavailable { 
+      background: transparent; 
+      color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .time-section {
+      width: 55%;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .time-section h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    
+    .dental .time-section h3 { color: #1976d2; }
+    .medical .time-section h3 { color: #388e3c; }
+    
+    .time-slots-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .time-slot-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+    
+    .dental .time-slot-item:hover:not(.disabled) {
+      border-color: #1976d2;
+      background: #e3f2fd;
+      transform: translateX(5px);
+    }
+    
+    .medical .time-slot-item:hover:not(.disabled) {
+      border-color: #388e3c;
+      background: #e8f5e9;
+      transform: translateX(5px);
+    }
+    
+    .time-slot-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #f5f5f5;
+    }
+    
+    .time-slot-item input[type="radio"] {
+      margin-right: 15px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    .time-slot-info {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .time-slot-time {
+      font-weight: 600;
+      color: #333;
+      font-size: 1rem;
+    }
+    
+    .time-slot-status {
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    
+    .status-available { background: #e8f5e9; color: #2e7d32; }
+    .status-booked { background: #ffebee; color: #c62828; }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .btn-back, .btn-next {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-back { background: #e0e0e0; color: #333; }
+    .btn-back:hover { background: #d0d0d0; }
+    
+    .dental .btn-next { background: #1976d2; color: white; }
+    .dental .btn-next:hover { background: #1565c0; }
+    
+    .medical .btn-next { background: #388e3c; color: white; }
+    .medical .btn-next:hover { background: #2e7d32; }
+    
+    .btn-next:disabled { background: #ccc; cursor: not-allowed; }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      color: #ddd;
+    }
+    
+    .loading-spinner {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    
+    .loading-spinner i {
+      font-size: 2rem;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 968px) {
+      .appointment-container { flex-direction: column; }
+      .date-section, .time-section { width: 100%; border-right: none; }
+      .date-section { border-bottom: 1px solid #e0e0e0; }
+      .department-buttons { flex-direction: column; }
+    }

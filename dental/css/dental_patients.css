@@ -1,0 +1,1054 @@
+/* Main Page Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f5f5;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  background-color: #fafafa;
+  overflow-y: auto;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.nav-tabs {
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 25px;
+}
+
+.nav-tabs .nav-link {
+  color: #666;
+  font-weight: 500;
+  border: none;
+  padding: 12px 24px;
+  background: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #8b2332;
+  border-color: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  color: #8b2332;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid #8b2332;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-box i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.search-box input {
+  padding: 10px 15px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 300px;
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 30px;
+  position: relative;
+  min-height: calc(100vh - 340px);
+}
+
+.patients-section {
+  flex: 1;
+  max-width: 100%;
+  transition: all 0.3s ease;
+}
+
+.patients-section.hidden {
+  display: none;
+}
+
+.patient-detail-section {
+  flex: 1;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.patient-detail-section.active {
+  display: block;
+  opacity: 1;
+}
+
+.patients-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.patients-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.btn-add-patient {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #8b2332;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-add-patient:hover {
+  background-color: #6d1b27;
+}
+
+.patients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100vh - 340px);
+  overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.patient-card {
+  background: white;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.patient-card:hover {
+  background: #f8f9fa;
+}
+
+.patient-card:hover .view-patient-btn {
+  transform: translateX(5px);
+}
+
+.patient-card.selected {
+  background: #fff5f5;
+  border-left: 4px solid #8b2332;
+}
+
+.patient-avatar-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patient-initials {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+}
+
+.patient-info-compact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.patient-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  min-width: 150px;
+}
+
+.patient-meta {
+  font-size: 13px;
+  color: #999;
+}
+
+.view-patient-btn {
+  margin-left: auto;
+  color: #8b2332;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.detail-card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-avatar .patient-initials {
+  font-size: 32px;
+}
+
+.detail-name-section h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.detail-name-section p {
+  color: #666;
+  margin: 0;
+}
+
+.btn-back {
+  background: transparent;
+  border: 2px solid #8b2332;
+  color: #8b2332;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-back:hover {
+  background: #8b2332;
+  color: white;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.tab-item {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-item.active {
+  color: #8b2332;
+  border-bottom-color: #8b2332;
+}
+
+.tab-content-inner {
+  display: none;
+}
+
+.tab-content-inner.active {
+  display: block;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #8b2332;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #8b2332;
+}
+
+.info-grid { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 20px;
+  padding: 30px;
+} 
+
+.info-item { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+} 
+
+.info-item label { 
+  font-weight: 700; 
+  color: #333; 
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+} 
+
+.info-item p { 
+  color: #333; 
+  font-size: 14px; 
+  padding: 10px 12px; 
+  background: white; 
+  border-radius: 6px; 
+  border: 1px solid #e9ecef; 
+  margin: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+} 
+
+.info-item.full-width { 
+  grid-column: 1 / -1; 
+}
+
+.medical-record-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.record-header h5 {
+  margin: 0;
+  color: #8b2332;
+  font-weight: 600;
+}
+
+.record-body p {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.visit-logs-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.visit-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.visit-logs-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 14px;
+}
+
+.visit-logs-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* ===== DENTAL RECORD FORM STYLES ===== */
+.consultation-form-header {
+  background: linear-gradient(135deg, #8b2332 0%, #6d1b27 100%);
+  color: white;
+  padding: 25px 30px;
+  text-align: center;
+  margin: -30px -30px 30px -30px;
+  border-radius: 12px 12px 0 0;
+}
+
+.consultation-form-header h3 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.dental-form {
+  padding: 0;
+}
+
+.consultation-section {
+  margin-bottom: 30px;
+  padding: 25px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.consultation-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #8b2332;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #8b2332;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #555;
+}
+
+.form-group .required {
+  color: #dc3545;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"] {
+  width: 100%;
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.form-group input.readonly-field {
+  background: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #8b2332;
+}
+
+/* Dental chart section - Standalone styles */
+.dental-chart-wrapper {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #8b2332;
+  margin-bottom: 25px;
+}
+
+.teeth-section-standalone {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Index Tables Styles */
+.index-tables-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.index-table-wrapper {
+  background: white;
+  border: 2px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.index-table-title {
+  background: #f8f9fa;
+  padding: 10px 15px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  border-bottom: 2px solid #333;
+}
+
+.index-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.index-table thead th {
+  background: #f8f9fa;
+  border: 1px solid #333;
+  padding: 8px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: #333;
+}
+
+.index-table tbody td {
+  border: 1px solid #333;
+  padding: 0;
+  text-align: center;
+  height: 35px;
+}
+
+.index-table tbody td.label-cell {
+  background: #f8f9fa;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.index-table tbody td input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  background: transparent;
+}
+
+.index-table tbody td input:focus {
+  outline: none;
+  background: #fffbf0;
+}
+
+.index-table tbody td input[readonly] {
+  background: #f0f0f0;
+  color: #666;
+  cursor: not-allowed;
+  font-weight: 600;
+}
+
+.index-legend {
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-top: 2px solid #333;
+  font-size: 11px;
+}
+
+.index-legend strong {
+  font-weight: 700;
+  margin-right: 10px;
+  color: #333;
+}
+
+.legend-abbr {
+  color: #555;
+}
+
+.teeth-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.teeth-label {
+  text-align: center;
+  font-size: 10px;
+  font-style: italic;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #555;
+}
+
+.tooth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.tooth-number {
+  font-size: 8px;
+  font-weight: 700;
+  color: #333;
+  min-height: 10px;
+  line-height: 10px;
+}
+
+.tooth-diagram {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #333;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.tooth-diagram:hover {
+  border-color: #8b2332;
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(139, 35, 50, 0.3);
+}
+
+.tooth-diagram.marked {
+  background: #ffebee;
+  border-color: #8b2332;
+}
+
+.tooth-diagram::before,
+.tooth-diagram::after {
+  content: '';
+  position: absolute;
+  background: #8b2332;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooth-diagram.marked::before {
+  width: 70%;
+  height: 2px;
+  transform: rotate(45deg);
+  opacity: 1;
+}
+
+.tooth-diagram.marked::after {
+  width: 70%;
+  height: 2px;
+  transform: rotate(-45deg);
+  opacity: 1;
+}
+
+.tooth-select {
+  width: 50px;
+  height: 20px;
+  border: 1px solid #666;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 8px;
+  padding: 2px;
+  cursor: pointer;
+  background: white;
+  font-weight: 500;
+}
+
+.tooth-select:focus {
+  outline: none;
+  border-color: #8b2332;
+  box-shadow: 0 0 0 2px rgba(139, 35, 50, 0.1);
+}
+
+/* Treatment Record - Standalone styles */
+.treatment-record-wrapper {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #8b2332;
+}
+
+.treatment-table-standalone {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  table-layout: fixed;
+  border: 2px solid #000;
+}
+
+.treatment-table-standalone thead {
+  background: #f8f9fa;
+}
+
+.treatment-table-standalone th {
+  border-bottom: 2px solid #000;
+  border-right: 1px solid #000;
+  padding: 12px 8px;
+  font-size: 13px;
+  background: #f8f9fa;
+  color: #000;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.treatment-table-standalone th:first-child {
+  width: 22%;
+}
+
+.treatment-table-standalone th:nth-child(2) {
+  width: 18%;
+}
+
+.treatment-table-standalone th:nth-child(3) {
+  width: 30%;
+}
+
+.treatment-table-standalone th:last-child {
+  width: 30%;
+  border-right: none;
+}
+
+.treatment-table-standalone tbody tr td {
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  padding: 0;
+  background: white;
+  height: 45px;
+  vertical-align: middle;
+}
+
+.treatment-table-standalone tbody tr td:last-child {
+  border-right: none;
+}
+
+.treatment-table-standalone tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.treatment-table-standalone input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 10px 8px;
+  font-size: 13px;
+  background: transparent;
+  text-align: center;
+  font-family: inherit;
+}
+
+.treatment-table-standalone input[type="date"] {
+  text-align: center;
+  padding: 10px 8px;
+  cursor: pointer;
+}
+
+.treatment-table-standalone input[type="text"] {
+  text-align: center;
+}
+
+.treatment-table-standalone input:focus {
+  outline: none;
+  background: #f5f5f5;
+}
+
+.add-row-btn-standalone {
+  margin: 15px 0 0 0;
+  background: #8b2332;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+
+.add-row-btn-standalone:hover {
+  background: #6d1b27;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 35, 50, 0.3);
+}
+
+/* Legend section */
+.legend-section {
+  margin: 40px 0 30px 0;
+  padding: 25px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.legend-title {
+  font-weight: 700;
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #8b2332;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #8b2332;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.legend-column h5 {
+  font-size: 13px;
+  margin: 0 0 15px 0;
+  color: #8b2332;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-item {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-item strong {
+  color: #333;
+  min-width: 50px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.legend-item input[type="checkbox"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #8b2332;
+  cursor: pointer;
+}
+
+/* Remarks section */
+.remarks-section {
+  margin: 30px 0;
+  padding: 25px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.remarks-section label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.remarks-section textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.remarks-section textarea:focus {
+  outline: none;
+  border-color: #8b2332;
+  box-shadow: 0 0 0 3px rgba(139, 35, 50, 0.1);
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+  padding: 25px 0 0 0;
+  border-top: 2px solid #f0f0f0;
+}
+
+.dental-btn {
+  padding: 14px 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dental-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dental-btn-primary {
+  background: linear-gradient(135deg, #8b2332 0%, #6d1b27 100%);
+  color: white;
+}
+
+.dental-btn-primary:hover {
+  background: linear-gradient(135deg, #6d1b27 0%, #551520 100%);
+}
+
+.dental-btn-secondary {
+  background: white;
+  color: #555;
+  border: 2px solid #ddd;
+}
+
+.dental-btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dental-chart-wrapper {
+    padding: 15px;
+  }
+  
+  .treatment-record-wrapper {
+    padding: 15px;
+  }
+  
+  .index-tables-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .legend-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .index-tables-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .index-table {
+    font-size: 10px;
+  }
+  
+  .index-table thead th,
+  .index-table tbody td.label-cell {
+    font-size: 10px;
+    padding: 6px 4px;
+  }
+  
+  .teeth-row {
+    gap: 4px;
+  }
+  
+  .tooth-diagram {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .tooth-select {
+    width: 55px;
+    height: 24px;
+    font-size: 10px;
+  }
+}
+
+@media print {
+  .header, .sidebar, .btn-back, .action-buttons, .nav-tabs, .search-box {
+    display: none !important;
+  }
+  
+  .main-content {
+    padding: 0;
+  }
+  
+  .detail-card {
+    box-shadow: none;
+  }
+  
+  .consultation-form-header {
+    background: #8b2332 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

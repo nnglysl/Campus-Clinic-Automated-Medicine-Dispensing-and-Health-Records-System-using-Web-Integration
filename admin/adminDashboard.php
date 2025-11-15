@@ -111,8 +111,8 @@ function timeAgo($datetime) {
   <title>Dashboard - Batangas State University</title>
   
   <!-- Stylesheets -->
-  <link href="../admin/adminDashboard.css" rel="stylesheet">
-  <link href="../admin/nav.css" rel="stylesheet">
+  <link href="../admin/css/adminDashboard.css" rel="stylesheet">
+  <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,12 +136,9 @@ function timeAgo($datetime) {
       </div>
     </div>
 
-    <!-- Right-side icons -->
     <div class="header-icons">
       <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-      <div class="logout-icon" onclick="window.location.href='../logout.php'">
-        <i class="bi bi-box-arrow-right"></i>
-      </div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
 
@@ -335,6 +332,8 @@ function timeAgo($datetime) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../js/logout.js"></script>
   <script>
     // Calendar functionality
     const calendar = document.getElementById('calendar');
@@ -412,112 +411,6 @@ function timeAgo($datetime) {
     }, 300000);
   </script>
 
-  <style>
-    .appointment-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      border-left: 4px solid #6b0d00;
-    }
-
-    .appointment-info {
-      flex: 1;
-    }
-
-    .appointment-name {
-      font-weight: 600;
-      margin: 0 0 8px 0;
-      color: #333;
-    }
-
-    .appointment-details {
-      display: flex;
-      gap: 15px;
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .appointment-details span {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .appointment-type {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .type-medical {
-      background: #ffebee;
-      color: #c62828;
-    }
-
-    .type-dental {
-      background: #e3f2fd;
-      color: #1565c0;
-    }
-
-    .see-more-btn {
-      color: #6b0d00;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .see-more-btn:hover {
-      text-decoration: underline;
-    }
-
-    .activity-item {
-      display: flex;
-      gap: 15px;
-      padding: 15px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .activity-item:last-child {
-      border-bottom: none;
-    }
-
-    .activity-icon {
-      width: 40px;
-      height: 40px;
-      background: #f0f0f0;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #6b0d00;
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
-
-    .activity-content h6 {
-      margin: 0 0 5px 0;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .activity-content p {
-      margin: 0 0 5px 0;
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .activity-time {
-      font-size: 0.8rem;
-      color: #999;
-    }
-  </style>
+  
 </body>
 </html>

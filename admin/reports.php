@@ -74,7 +74,6 @@ $stmt = $pdo->query("
                     ELSE 'units'
                   END
            ) as quantity,
-           se.unit_price, se.total_amount,
            CONCAT(e.first_name, ' ', e.last_name) as received_by
     FROM stock_entries se
     JOIN inventory i ON se.inventory_id = i.id
@@ -97,10 +96,8 @@ $totalDeliveries = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
 $stmt = $pdo->query("SELECT COALESCE(SUM(quantity), 0) as items FROM stock_entries");
 $itemsReceived = $stmt->fetch(PDO::FETCH_ASSOC)['items'];
-
-$stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM stock_entries");
-$totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,8 +106,8 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
   <title>Reports & Analytics</title>
 
   <!-- Stylesheets -->
-  <link href="../admin/reports.css" rel="stylesheet" />
-  <link href="../admin/nav.css" rel="stylesheet" />
+  <link href="../admin/css/reports.css" rel="stylesheet" />
+  <link href="/finalproject/css/nav.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
@@ -137,7 +134,7 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     <!-- Right-side icons -->
     <div class="header-icons">
       <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-      <div class="logout-icon"><i class="bi bi-box-arrow-right"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
 
@@ -379,10 +376,6 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             <h2><?php echo number_format($itemsReceived); ?></h2>
             <p>Items Received</p>
           </div>
-          <div class="stat-card">
-            <h2>₱<?php echo number_format($totalValue, 2); ?></h2>
-            <p>Total Value</p>
-          </div>
         </div>
 
         <div class="table-container">
@@ -395,8 +388,6 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                 <th>Supplier</th>
                 <th>Medicine</th>
                 <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total Amount</th>
                 <th>Received By</th>
               </tr>
             </thead>
@@ -408,8 +399,6 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                 <td><?php echo htmlspecialchars($entry['supplier']); ?></td>
                 <td><?php echo htmlspecialchars($entry['medicine']); ?></td>
                 <td><?php echo htmlspecialchars($entry['quantity']); ?></td>
-                <td>₱<?php echo number_format($entry['unit_price'], 2); ?></td>
-                <td>₱<?php echo number_format($entry['total_amount'], 2); ?></td>
                 <td><?php echo htmlspecialchars($entry['received_by']); ?></td>
               </tr>
               <?php endforeach; ?>
@@ -422,6 +411,8 @@ $totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/logout.js"></script>
   
   <script>
     // Tab switching

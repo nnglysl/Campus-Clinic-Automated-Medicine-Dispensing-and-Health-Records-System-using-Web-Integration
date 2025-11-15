@@ -83,8 +83,8 @@ function getInitials($name) {
   <title>Patients - Batangas State University</title>
 
   <!-- Stylesheets -->
-  <link href="../admin/patients.css" rel="stylesheet">
-  <link href="../admin/nav.css" rel="stylesheet">
+  <link href="../admin/css/patients.css" rel="stylesheet">
+  <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
@@ -104,7 +104,7 @@ function getInitials($name) {
 
     <div class="header-icons">
       <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-      <div class="logout-icon" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
 
@@ -259,7 +259,10 @@ function getInitials($name) {
   <!-- Add Patient Modal -->
   <?php include './includes/addPatient.php'; ?>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../js/logout.js"></script>
 <script>
     // Initialize variables with fallbacks to prevent undefined errors
     let patientsData = [];

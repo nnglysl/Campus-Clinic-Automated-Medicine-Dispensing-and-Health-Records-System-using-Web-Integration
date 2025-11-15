@@ -2,10 +2,6 @@
 require_once '../config/database.php';
 session_start();
 
-// Enable error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
@@ -21,7 +17,29 @@ $user = [
 
 $pdo = getDB();
 
-// Handle appointment booking - NOW USES CENTRALIZED HANDLER
+// Add after $pdo = getDB();
+function getDoctorAvailableDates($pdo, $startDate, $endDate) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT DISTINCT schedule_date
+            FROM doctor_schedules
+            WHERE schedule_date BETWEEN ? AND ?
+            AND is_available = 1
+            AND schedule_type = 'available'
+            ORDER BY schedule_date
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        error_log("Error fetching doctor schedules: " . $e->getMessage());
+        return [];
+    }
+}
+
+$startDate = date('Y-m-01');
+$endDate = date('Y-m-t', strtotime('+2 months'));
+$availableDates = getDoctorAvailableDates($pdo, $startDate, $endDate);
+// Handle appointment booking
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_appointment'])) {
     header('Content-Type: application/json');
     
@@ -29,43 +47,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_appointment'])) 
         $appointmentType = $_POST['appointment_type'] ?? '';
         $appointmentDate = $_POST['appointment_date'] ?? '';
         $appointmentTime = $_POST['appointment_time'] ?? '';
+        $department = $_POST['department'] ?? '';
         
-        // Validate inputs
-        if (empty($appointmentType) || empty($appointmentDate) || empty($appointmentTime)) {
+        if (empty($appointmentType) || empty($appointmentDate) || empty($appointmentTime) || empty($department)) {
             echo json_encode(['success' => false, 'message' => 'All fields are required.']);
             exit();
         }
         
-        // Check if date is not in the past
         if (strtotime($appointmentDate) < strtotime(date('Y-m-d'))) {
             echo json_encode(['success' => false, 'message' => 'Cannot book appointments in the past.']);
             exit();
         }
         
-        // Check if date is weekend
         $dayOfWeek = date('w', strtotime($appointmentDate));
         if ($dayOfWeek == 0 || $dayOfWeek == 6) {
-            echo json_encode(['success' => false, 'message' => 'Appointments are not available on weekends.']);
+            echo json_encode(['success' => false, 'message' => 'Appointments not available on weekends.']);
             exit();
         }
         
-        // Check for time conflicts
+        // Check for conflicts (1 patient per slot per department)
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as count 
             FROM appointments 
             WHERE appointment_date = ? 
             AND appointment_time = ? 
+            AND appointment_type = ?
             AND status != 'cancelled'
         ");
-        $stmt->execute([$appointmentDate, $appointmentTime]);
+        $stmt->execute([$appointmentDate, $appointmentTime, $appointmentType]);
         $conflict = $stmt->fetch();
         
-        if ($conflict['count'] > 0) {
-            echo json_encode(['success' => false, 'message' => 'That time slot has already been reserved.']);
+        if ($conflict['count'] >= 1) {
+            echo json_encode(['success' => false, 'message' => 'Time slot already booked.']);
             exit();
         }
         
-        // Insert appointment with scheduled status
+        // Insert appointment with department
         $stmt = $pdo->prepare("
             INSERT INTO appointments 
             (patient_id, appointment_date, appointment_time, appointment_type, status, created_at, updated_at) 
@@ -80,75 +97,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_appointment'])) 
         
         $appointmentId = $pdo->lastInsertId();
         
-        // Now sync to Google Calendar using the centralized handler
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => '../crud/appointment_handler.php?action=sync&id=' . $appointmentId,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_COOKIE => session_name() . '=' . session_id(),
-            CURLOPT_TIMEOUT => 30
-        ]);
-        
-        $calendarResponse = curl_exec($ch);
-        $calendarResult = json_decode($calendarResponse, true);
-        curl_close($ch);
-        
-        // Log calendar sync result (optional)
-        if ($calendarResult && $calendarResult['success']) {
-            error_log("Appointment {$appointmentId} synced to calendar: {$calendarResult['event_id']}");
-        } else {
-            error_log("Calendar sync failed for appointment {$appointmentId}: " . 
-                     ($calendarResult['error'] ?? 'Unknown error'));
-        }
-        
         echo json_encode([
             'success' => true, 
-            'message' => 'Appointment confirmed and synced to calendar!',
+            'message' => 'Appointment confirmed!',
             'appointment' => [
                 'id' => $appointmentId,
                 'type' => $appointmentType,
+                'department' => $department,
                 'date' => $appointmentDate,
                 'time' => $appointmentTime
-            ],
-            'calendar_synced' => $calendarResult['success'] ?? false
+            ]
         ]);
         exit();
         
     } catch (PDOException $e) {
         error_log("Error booking appointment: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'An error occurred. Please try again.']);
+        echo json_encode(['success' => false, 'message' => 'Database error occurred']);
         exit();
     }
-}
-
-// Fetch all booked appointments for calendar display
-$bookedAppointments = [];
-try {
-    $stmt = $pdo->query("
-        SELECT appointment_date, appointment_time, appointment_type 
-        FROM appointments 
-        WHERE status != 'cancelled'
-        ORDER BY appointment_date, appointment_time
-    ");
-    $bookedAppointments = $stmt->fetchAll();
-} catch (PDOException $e) {
-    error_log("Error fetching appointments: " . $e->getMessage());
-}
-
-// Fetch user's appointments
-$myAppointments = [];
-try {
-    $stmt = $pdo->prepare("
-        SELECT * FROM appointments 
-        WHERE patient_id = ?
-        ORDER BY appointment_date DESC, appointment_time DESC
-        LIMIT 10
-    ");
-    $stmt->execute([$user['id']]);
-    $myAppointments = $stmt->fetchAll();
-} catch (PDOException $e) {
-    error_log("Error fetching user appointments: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -156,22 +122,15 @@ try {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Appointment Reservation</title>
+  <title>Appointment Reservation - BSU Clinic</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
-
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- External CSS -->
-  <link href="../student/css/nav.css" rel="stylesheet" />
-  <link rel="stylesheet" href="../student/css/appointment.css" />
+  <link href="css/nav.css" rel="stylesheet" />
+  <link href="css/appointment.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="layout">
-    <!-- Header -->
     <div class="header">
       <div class="logo-section">
         <div class="logo">
@@ -182,343 +141,631 @@ try {
           <h1>University</h1>
         </div>
       </div>
-      <!-- Right-side icons -->
       <div class="header-icons">
-        <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-        <div class="logout-icon" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
-      </div>
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+    </div>
     </div>
 
-    <!-- Sidebar + Content -->
     <div class="main-container d-flex">
-      <!-- Sidebar -->
       <div class="sidebar">
-        <a href="../student/student_dashboard.php" class="menu-item">Dashboard</a>
-        <a href="../student/profile.php" class="menu-item">Profile</a>
-        <a href="../student/appointment.php" class="menu-item active">Appointment</a>
-        <a href="../student/records.php" class="menu-item">Health Records</a>
-        <a href="../student/settings.php" class="menu-item">Settings</a>
+        <a href="student_dashboard.php" class="menu-item">Dashboard</a>
+        <a href="profile.php" class="menu-item">Profile</a>
+        <a href="appointment.php" class="menu-item active">Appointment</a>
+        <a href="records.php" class="menu-item">Health Records</a>
+        <a href="settings.php" class="menu-item">Settings</a>
       </div>
 
-      <!-- Main Content -->
-      <div class="content p-4 flex-grow-1">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="fw-bold">Make a Reservation</h2>
+      <div class="content-wrapper" style="flex: 1; display: flex; flex-direction: column;">
+        <!-- Department Selection View -->
+        <div class="department-selection" id="departmentSelection">
+          <h2>Book an Appointment</h2>
+          <p>Please select the department you'd like to visit</p>
+          
+          <div class="department-buttons">
+            <div class="department-btn dental" onclick="selectDepartment('dental')">
+              <i class="bi bi-heart-pulse-fill"></i>
+              <h3>Dental</h3>
+              <p>Dental care & treatment</p>
+            </div>
+            
+            <div class="department-btn medical" onclick="selectDepartment('medical')">
+              <i class="bi bi-hospital-fill"></i>
+              <h3>Medical</h3>
+              <p>General medical services</p>
+            </div>
+          </div>
         </div>
 
-        <!-- Calendar -->
-        <div class="calendar-container">
-          <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
-            <button id="prevMonth" class="btn btn-sm btn-outline-danger"><i class="bi bi-chevron-left"></i></button>
-            <h4 id="monthYear" class="fw-bold text-center mb-0"></h4>
-            <button id="nextMonth" class="btn btn-sm btn-outline-danger"><i class="bi bi-chevron-right"></i></button>
+        <!-- Dental Calendar -->
+        <div class="appointment-container dental" id="dentalCalendar">
+          <div class="date-section">
+            <a href="#" class="back-to-selection" onclick="backToSelection(); return false;">
+              <i class="bi bi-arrow-left"></i> Back to Selection
+            </a>
+            
+            <span class="department-badge">🦷 Dental Department</span>
+            <h3>Select Date</h3>
+            <p class="subtitle">Real-time sync with dental schedules
+              <span class="last-updated" id="lastUpdatedDental"></span>
+            </p>
+
+            <div class="calendar-controls">
+              <button id="prevMonthDental"><i class="bi bi-chevron-left"></i></button>
+              <h4 id="monthYearDental">November 2025</h4>
+              <button id="nextMonthDental"><i class="bi bi-chevron-right"></i></button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGridDental"></div>
+            
+          
           </div>
-          <div class="weekdays fw-semibold text-center mb-2">
-            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
-            <span>Thu</span><span>Fri</span><span>Sat</span>
+
+          <div class="time-section">
+            <h3>Select Time</h3>
+
+            <div class="time-slots-list" id="timeSlotsListDental">
+              <div class="empty-state">
+                <i class="bi bi-calendar-week"></i>
+                <p>Select a date to view available time slots</p>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn-back" onclick="backToSelection()">BACK</button>
+              <button class="btn-next" id="btnNextDental" disabled>NEXT</button>
+            </div>
           </div>
-          <div class="days" id="calendarDays"></div>
         </div>
 
-        <!-- My Appointments -->
-        <?php if (!empty($myAppointments)): ?>
-        <div class="mt-4">
-          <h5 class="fw-bold mb-3">My Appointments</h5>
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead class="table-light">
-                <tr>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Calendar</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($myAppointments as $apt): ?>
-                <tr>
-                  <td><?php echo date('F j, Y', strtotime($apt['appointment_date'])); ?></td>
-                  <td><?php echo date('g:i A', strtotime($apt['appointment_time'])); ?></td>
-                  <td><?php echo htmlspecialchars($apt['appointment_type']); ?></td>
-                  <td>
-                    <span class="badge bg-<?php 
-                      echo $apt['status'] === 'confirmed' ? 'success' : 
-                           ($apt['status'] === 'scheduled' ? 'warning' : 
-                           ($apt['status'] === 'cancelled' ? 'danger' : 'secondary')); 
-                    ?>">
-                      <?php echo htmlspecialchars(ucfirst($apt['status'])); ?>
-                    </span>
-                  </td>
-                  <td>
-                    <?php if ($apt['calendar_event_id']): ?>
-                      <span class="badge bg-success">
-                        <i class="bi bi-check-circle"></i> Synced
-                      </span>
-                    <?php else: ?>
-                      <span class="badge bg-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Not Synced
-                      </span>
-                    <?php endif; ?>
-                  </td>
-                </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+        <!-- Medical Calendar -->
+        <div class="appointment-container medical" id="medicalCalendar">
+          <div class="date-section">
+            <a href="#" class="back-to-selection" onclick="backToSelection(); return false;">
+              <i class="bi bi-arrow-left"></i> Back to Selection
+            </a>
+            
+            <span class="department-badge">🩺 Medical Department</span>
+            <h3>Select Date</h3>
+            <p class="subtitle">Real-time sync with medical schedules
+              <span class="last-updated" id="lastUpdatedMedical"></span>
+            </p>
+
+            <div class="calendar-controls">
+              <button id="prevMonthMedical"><i class="bi bi-chevron-left"></i></button>
+              <h4 id="monthYearMedical">November 2025</h4>
+              <button id="nextMonthMedical"><i class="bi bi-chevron-right"></i></button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGridMedical"></div>
+          
+          </div>
+
+          <div class="time-section">
+            <h3>Select Time</h3>
+
+            <div class="time-slots-list" id="timeSlotsListMedical">
+              <div class="empty-state">
+                <i class="bi bi-calendar-week"></i>
+                <p>Select a date to view available time slots</p>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn-back" onclick="backToSelection()">BACK</button>
+              <button class="btn-next" id="btnNextMedical" disabled>NEXT</button>
+            </div>
           </div>
         </div>
-        <?php endif; ?>
       </div>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+  <!-- Booking Modal -->
+  <div class="modal fade" id="bookingModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title fw-semibold">
-            <i class="bi bi-calendar-check me-2"></i>Reserve Appointment
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-calendar-check me-2"></i>Confirm Appointment
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
 
         <form id="appointmentForm">
-          <div class="modal-body p-4">
-            <h6 class="text-center text-maroon fw-bold mb-3">Select Appointment Details</h6>
-
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Appointment Type</label>
-              <select id="appointmentType" name="appointment_type" class="form-select" required>
-                <option value="">-- Select Type --</option>
-                <option value="dental">Dental</option>
-                <option value="medical">Medical</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Available Time</label>
-              <div id="timeButtons" class="time-buttons">
-                <!-- JS will insert time buttons -->
-              </div>
+          <div class="modal-body">
+            <div class="mb-4">
+              <h6 class="fw-semibold text-primary">
+                <span id="departmentDisplay"></span> - <span id="selectedDateDisplay"></span>
+              </h6>
             </div>
 
             <input type="hidden" id="appointmentDate" name="appointment_date">
             <input type="hidden" id="appointmentTime" name="appointment_time">
-
-            <div class="alert alert-warning small mb-0 text-center">
-              Note: Appointments are only available Monday–Friday, 8:00 AM – 5:00 PM.
-            </div>
+            <input type="hidden" id="appointmentType" name="appointment_type">
+            <input type="hidden" id="appointmentDepartment" name="department">
           </div>
 
-          <div class="modal-footer border-0 p-3">
+          <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger" id="confirmBooking">Confirm</button>
+            <button type="submit" class="btn btn-primary">Confirm Booking</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Calendar & Booking Logic -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../js/logout.js"></script>
   <script>
-    // Booked appointments from PHP
-    const bookedDates = <?php echo json_encode($bookedAppointments, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-
-    const daysContainer = document.getElementById("calendarDays");
-    const monthYear = document.getElementById("monthYear");
-    const prevMonthBtn = document.getElementById("prevMonth");
-    const nextMonthBtn = document.getElementById("nextMonth");
-
-    let currentDate = new Date();
-    let selectedDate = null;
-
-    function renderCalendar() {
-      daysContainer.innerHTML = "";
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const monthStart = new Date(year, month, 1);
-      const monthEnd = new Date(year, month + 1, 0);
-      const daysInMonth = monthEnd.getDate();
-      const startDay = monthStart.getDay();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      monthYear.textContent = `${currentDate.toLocaleString("default", { month: "long" })} ${year}`;
-
-      // Empty cells for days before month starts
-      for (let i = 0; i < startDay; i++) {
-        const emptyCell = document.createElement("button");
-        emptyCell.classList.add("invisible");
-        daysContainer.appendChild(emptyCell);
+    // Configuration
+    const API_BASE = '../crud';
+    const DOCTOR_AVAILABLE_DATES = <?php echo json_encode($availableDates); ?>;
+    // State
+    let currentDepartment = null;
+    let currentDate = { dental: new Date(), medical: new Date() };
+    let selectedDate = { dental: null, medical: null };
+    let selectedTime = { dental: null, medical: null };
+    let availabilityCache = { dental: {}, medical: {} };
+    let timeSlotsCache = { dental: {}, medical: {} };
+    let lastNotificationId = 0;
+    let lastSyncTime = { dental: null, medical: null };
+    let pollAbortController = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeEventListeners();
+      // Don't render calendar yet - wait for department selection
+    });
+    
+    function initializeEventListeners() {
+      // Dental calendar
+      document.getElementById('prevMonthDental')?.addEventListener('click', async () => {
+        currentDate.dental.setMonth(currentDate.dental.getMonth() - 1);
+        await syncAvailability('dental');
+        renderCalendar('dental');
+      });
+      
+      document.getElementById('nextMonthDental')?.addEventListener('click', async () => {
+        currentDate.dental.setMonth(currentDate.dental.getMonth() + 1);
+        await syncAvailability('dental');
+        renderCalendar('dental');
+      });
+      
+      document.getElementById('btnNextDental')?.addEventListener('click', () => handleNextClick('dental'));
+      
+      // Medical calendar
+      document.getElementById('prevMonthMedical')?.addEventListener('click', async () => {
+        currentDate.medical.setMonth(currentDate.medical.getMonth() - 1);
+        await syncAvailability('medical');
+        renderCalendar('medical');
+      });
+      
+      document.getElementById('nextMonthMedical')?.addEventListener('click', async () => {
+        currentDate.medical.setMonth(currentDate.medical.getMonth() + 1);
+        await syncAvailability('medical');
+        renderCalendar('medical');
+      });
+      
+      document.getElementById('btnNextMedical')?.addEventListener('click', () => handleNextClick('medical'));
+      
+      document.getElementById('appointmentForm')?.addEventListener('submit', handleFormSubmit);
+    }
+    
+    async function selectDepartment(dept) {
+      currentDepartment = dept;
+      
+      // Hide selection, show calendar
+      document.getElementById('departmentSelection').style.display = 'none';
+      document.getElementById(dept + 'Calendar').classList.add('active');
+      
+      // Initialize calendar and sync - sync FIRST before rendering
+      await syncAvailability(dept);
+      renderCalendar(dept);
+      startRealTimeSync(dept);
+    }
+    
+    function backToSelection() {
+      // Stop polling
+      if (pollAbortController) {
+        pollAbortController.abort();
       }
-
-      // Days of the month
-      for (let i = 1; i <= daysInMonth; i++) {
-        const dateObj = new Date(year, month, i);
-        dateObj.setHours(0, 0, 0, 0);
-        const dateISO = dateObj.toISOString().split("T")[0];
-        const btn = document.createElement("button");
-        btn.textContent = i;
-
-        // Disable past dates
-        if (dateObj < today) {
-          btn.classList.add("booked");
-          btn.disabled = true;
+      
+      // Hide calendars, show selection
+      document.getElementById('dentalCalendar').classList.remove('active');
+      document.getElementById('medicalCalendar').classList.remove('active');
+      document.getElementById('departmentSelection').style.display = 'flex';
+      
+      // Reset state
+      currentDepartment = null;
+      selectedDate = { dental: null, medical: null };
+      selectedTime = { dental: null, medical: null };
+    }
+    
+    // Real-time sync system
+    function startRealTimeSync(dept) {
+      if (pollAbortController) {
+        pollAbortController.abort();
+      }
+      startLongPolling(dept);
+    }
+    
+    async function startLongPolling(dept) {
+      while (currentDepartment === dept) {
+        try {
+          pollAbortController = new AbortController();
+          
+          const response = await fetch(
+            `${API_BASE}/poll_schedule_changes.php?last_id=${lastNotificationId}&timeout=25`,
+            { signal: pollAbortController.signal }
+          );
+          
+          if (!response.ok) throw new Error('Poll failed');
+          
+          const result = await response.json();
+          
+          if (result.success && result.has_changes) {
+            console.log('Changes detected:', result.notifications);
+            lastNotificationId = result.last_id;
+            
+            // Check if changes affect current view
+            const affectsCurrentView = result.notifications.some(notif => {
+              const data = notif.data;
+              if (data.schedule_date || data.appointment_date) {
+                const date = new Date(data.schedule_date || data.appointment_date);
+                return date.getMonth() === currentDate[dept].getMonth() && 
+                       date.getFullYear() === currentDate[dept].getFullYear();
+              }
+              return false;
+            });
+            
+            if (affectsCurrentView) {
+              showSyncIndicator('syncing', 'New changes detected...');
+              await syncAvailability(dept);
+              
+              // Refresh time slots if date is selected
+              if (selectedDate[dept]) {
+                renderTimeSlots(selectedDate[dept], dept);
+              }
+            }
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (error) {
+          if (error.name === 'AbortError') break;
+          console.error('Polling error:', error);
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
-        // Disable weekends
-        else if (dateObj.getDay() === 0 || dateObj.getDay() === 6) {
-          btn.classList.add("booked");
-          btn.disabled = true;
-        }
-        // Available dates
-        else {
-          btn.classList.add("available");
-          btn.addEventListener("click", () => openBookingModal(dateISO));
-        }
-
-        daysContainer.appendChild(btn);
       }
     }
-
-    function openBookingModal(dateISO) {
-      selectedDate = dateISO;
-      const modal = new bootstrap.Modal(document.getElementById("bookingModal"));
-      document.getElementById("appointmentType").value = "";
-      document.getElementById("appointmentDate").value = dateISO;
-      document.getElementById("appointmentTime").value = "";
-
-      // Generate time buttons (8 AM to 5 PM, skip 12 PM for lunch break)
-      const timeContainer = document.getElementById("timeButtons");
-      timeContainer.innerHTML = "";
-      
-      for (let hour = 8; hour <= 17; hour++) {
-        if (hour === 12) continue; // skip lunch break
-
-        const time = `${hour.toString().padStart(2, "0")}:00:00`;
-        const displayTime = `${hour.toString().padStart(2, "0")}:00`;
+    
+    async function syncAvailability(dept) {
+      try {
+        const startDate = new Date(currentDate[dept].getFullYear(), currentDate[dept].getMonth(), 1);
+        const endDate = new Date(currentDate[dept].getFullYear(), currentDate[dept].getMonth() + 1, 0);
         
-        // Check if time is already booked
-        const isBooked = bookedDates.some(apt => 
-          apt.appointment_date === dateISO && apt.appointment_time === time
+        const response = await fetch(
+          `${API_BASE}/get_available_slots.php?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&department=${dept}`
         );
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = displayTime;
-        btn.classList.add("btn", "btn-outline-danger", "rounded-pill", "px-3", "py-1", "m-1");
         
-        if (isBooked) {
-          btn.classList.add("disabled");
-          btn.disabled = true;
-          btn.title = "Already booked";
+        if (!response.ok) throw new Error('Sync failed');
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          availabilityCache[dept] = result.data.calendar_dates;
+          lastSyncTime[dept] = new Date(result.data.last_updated);
+          
+          // Cache all time slots for the month
+          const timeSlots = result.data.time_slots || [];
+          timeSlots.forEach(slot => {
+            if (!timeSlotsCache[dept][slot.date]) {
+              timeSlotsCache[dept][slot.date] = [];
+            }
+            timeSlotsCache[dept][slot.date].push(slot);
+          });
+          
+          renderCalendar(dept);
+          updateLastSyncedTime(dept);
+          showSyncIndicator('success', 'Synced successfully');
         } else {
-          btn.onclick = () => {
-            document.querySelectorAll("#timeButtons button").forEach(b => {
-              b.classList.remove("selected", "btn-danger");
-              b.classList.add("btn-outline-danger");
-            });
-            btn.classList.remove("btn-outline-danger");
-            btn.classList.add("selected", "btn-danger");
-            document.getElementById("appointmentTime").value = time;
-          };
+          throw new Error(result.error || 'Sync failed');
+        }
+      } catch (error) {
+        console.error('Sync error:', error);
+        showSyncIndicator('error', 'Sync failed');
+      }
+    }
+    
+    function showSyncIndicator(type, message) {
+      const indicator = document.getElementById('syncIndicator');
+      const messageEl = document.getElementById('syncMessage');
+      
+      indicator.className = 'sync-indicator ' + type;
+      messageEl.textContent = message;
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          indicator.style.display = 'none';
+        }, 2000);
+      }
+    }
+    
+    function updateLastSyncedTime(dept) {
+      const el = document.getElementById('lastUpdated' + dept.charAt(0).toUpperCase() + dept.slice(1));
+      if (el && lastSyncTime[dept]) {
+        el.textContent = `Last synced: ${lastSyncTime[dept].toLocaleTimeString()}`;
+      }
+    }
+    
+    function renderCalendar(dept) {
+  const grid = document.getElementById('calendarGrid' + dept.charAt(0).toUpperCase() + dept.slice(1));
+  if (!grid) return;
+  
+  const year = currentDate[dept].getFullYear();
+  const month = currentDate[dept].getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startDay = firstDay.getDay();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  document.getElementById('monthYear' + dept.charAt(0).toUpperCase() + dept.slice(1)).textContent = 
+    firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  grid.innerHTML = '';
+  
+  // Headers
+  ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(day => {
+    const el = document.createElement('div');
+    el.className = 'calendar-header';
+    el.textContent = day;
+    grid.appendChild(el);
+  });
+  
+  // Previous month days
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  for (let i = startDay - 1; i >= 0; i--) {
+    const el = document.createElement('div');
+    el.className = 'calendar-day other-month';
+    el.textContent = prevMonthLastDay - i;
+    grid.appendChild(el);
+  }
+  
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    
+    const dateISO = formatDate(date);
+    const dayOfWeek = date.getDay();
+    
+    const el = document.createElement('div');
+    el.className = 'calendar-day';
+    el.textContent = day;
+    
+    const isPast = date < today;
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    // ✅ CHECK IF DATE HAS DOCTOR SCHEDULE INSTEAD OF HARDCODED DAYS
+    const isDoctorAvailable = DOCTOR_AVAILABLE_DATES.includes(dateISO);
+    
+    if (date.getTime() === today.getTime()) el.classList.add('today');
+    if (selectedDate[dept] && dateISO === selectedDate[dept]) el.classList.add('selected');
+    
+    if (isPast || isWeekend || !isDoctorAvailable) {
+      el.classList.add('disabled');
+    } else {
+      const availability = availabilityCache[dept][dateISO];
+      
+      if (availability) {
+        el.classList.add(availability.status);
+        el.title = `${availability.available_slots} of ${availability.total_slots} slots available`;
+        
+        if (availability.status === 'fully-booked') {
+          el.style.cursor = 'not-allowed';
+        } else {
+          el.addEventListener('click', () => {
+            selectedDate[dept] = dateISO;
+            renderCalendar(dept);
+            renderTimeSlots(dateISO, dept);
+          });
+        }
+      } else if (!el.classList.contains('unavailable')) {
+        el.addEventListener('click', () => {
+          selectedDate[dept] = dateISO;
+          renderCalendar(dept);
+          renderTimeSlots(dateISO, dept);
+        });
+      }
+    }
+    
+    grid.appendChild(el);
+  }
+  
+  // Next month days
+  const totalCells = grid.children.length - 7;
+  const remaining = (Math.ceil(totalCells / 7) * 7) - totalCells;
+  for (let i = 1; i <= remaining; i++) {
+    const el = document.createElement('div');
+    el.className = 'calendar-day other-month';
+    el.textContent = i;
+    grid.appendChild(el);
+  }
+}
+    
+    async function renderTimeSlots(dateISO, dept) {
+      const container = document.getElementById('timeSlotsList' + dept.charAt(0).toUpperCase() + dept.slice(1));
+      if (!container) return;
+      
+      // Check cache first for instant loading
+      if (timeSlotsCache[dept][dateISO]) {
+        displayTimeSlots(timeSlotsCache[dept][dateISO], container, dept);
+        return;
+      }
+      
+      container.innerHTML = '<div class="loading-spinner"><i class="bi bi-arrow-repeat"></i><p>Loading time slots...</p></div>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/get_available_slots.php?start_date=${dateISO}&end_date=${dateISO}&department=${dept}`);
+        const result = await response.json();
+        
+        if (!result.success) throw new Error(result.error);
+        
+        const slots = result.data.time_slots.filter(slot => slot.date === dateISO);
+        
+        // Cache the slots
+        timeSlotsCache[dept][dateISO] = slots;
+        
+        displayTimeSlots(slots, container, dept);
+      } catch (error) {
+        console.error('Error loading time slots:', error);
+        container.innerHTML = '<div class="empty-state" style="color: #f44336;"><i class="bi bi-exclamation-triangle"></i><p>Error loading slots</p></div>';
+      }
+    }
+    
+    function displayTimeSlots(slots, container, dept) {
+      if (slots.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No time slots available</p></div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      slots.forEach(slot => {
+        const item = document.createElement('div');
+        item.className = 'time-slot-item';
+        if (!slot.available) item.classList.add('disabled');
+        
+        const statusClass = slot.available ? 'status-available' : 'status-booked';
+        const statusText = slot.available ? 'Available' : 'Booked';
+        
+        item.innerHTML = `
+          <input type="radio" name="timeSlot${dept}" value="${slot.time}" ${slot.available ? '' : 'disabled'}>
+          <div class="time-slot-info">
+            <span class="time-slot-time">${slot.formatted_time}</span>
+            <span class="time-slot-status ${statusClass}">${statusText}</span>
+          </div>
+        `;
+        
+        if (slot.available) {
+          item.querySelector('input').addEventListener('change', (e) => {
+            if (e.target.checked) {
+              selectedTime[dept] = slot.time;
+              document.getElementById('btnNext' + dept.charAt(0).toUpperCase() + dept.slice(1)).disabled = false;
+            }
+          });
         }
         
-        timeContainer.appendChild(btn);
-      }
-
+        container.appendChild(item);
+      });
+    }
+    
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    function formatTime(time24) {
+      const parts = time24.split(':');
+      const hour = parseInt(parts[0]);
+      const minutes = parts[1] || '00';
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${String(hour12).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+    
+    function handleNextClick(dept) {
+      if (!selectedDate[dept] || !selectedTime[dept]) return;
+      
+      const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+      document.getElementById('appointmentForm')?.reset();
+      
+      document.getElementById('appointmentDate').value = selectedDate[dept];
+      document.getElementById('appointmentTime').value = selectedTime[dept];
+      document.getElementById('appointmentType').value = dept;
+      document.getElementById('appointmentDepartment').value = dept;
+      
+      const [year, month, day] = selectedDate[dept].split('-').map(Number);
+      const dateObj = new Date(year, month - 1, day);
+      
+      const formatted = dateObj.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const deptName = dept.charAt(0).toUpperCase() + dept.slice(1);
+      const deptIcon = dept === 'dental' ? '🦷' : '🩺';
+      
+      document.getElementById('departmentDisplay').textContent = `${deptIcon} ${deptName}`;
+      document.getElementById('selectedDateDisplay').textContent = 
+        `${formatted} at ${formatTime(selectedTime[dept])}`;
+      
       modal.show();
     }
-
-    // Handle form submission
-    document.getElementById("appointmentForm").addEventListener("submit", async function(e) {
+    
+    async function handleFormSubmit(e) {
       e.preventDefault();
-
-      const formData = new FormData(this);
-      formData.append("book_appointment", "1");
-
-      const type = formData.get("appointment_type");
-      const time = formData.get("appointment_time");
-
-      if (!type) {
-        Swal.fire({
-          icon: "warning",
-          title: "Select Type",
-          text: "Please select an appointment type.",
-          confirmButtonColor: "#d32f2f"
-        });
-        return;
-      }
-
-      if (!time) {
-        Swal.fire({
-          icon: "warning",
-          title: "Select Time",
-          text: "Please select a time slot.",
-          confirmButtonColor: "#d32f2f"
-        });
-        return;
-      }
-
+      const formData = new FormData(e.target);
+      formData.append('book_appointment', '1');
+      
       try {
-        const response = await fetch("appointment.php", {
-          method: "POST",
-          body: formData
+        const response = await fetch('appointment.php', { 
+          method: 'POST', 
+          body: formData 
         });
-
-        const result = await response.json();
-
+        
+        const text = await response.text();
+        let result;
+        
+        try {
+          result = JSON.parse(text);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          throw new Error('Invalid response from server');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
+        
         if (result.success) {
-          const modal = bootstrap.Modal.getInstance(document.getElementById("bookingModal"));
-          modal.hide();
-
-          Swal.fire({
-            icon: "success",
-            title: "Appointment Confirmed!",
-            html: `
-              <p>${result.appointment.type} appointment on ${result.appointment.date} at ${result.appointment.time}</p>
-              ${result.calendar_synced ? 
-                '<p class="text-success"><i class="bi bi-check-circle"></i> Synced to Google Calendar</p>' : 
-                '<p class="text-warning"><i class="bi bi-exclamation-triangle"></i> Not synced to calendar</p>'
-              }
-            `,
-            confirmButtonColor: "#d32f2f"
-          }).then(() => {
-            location.reload(); // Reload to show updated appointments
+          const deptName = result.appointment.department.charAt(0).toUpperCase() + result.appointment.department.slice(1);
+          await Swal.fire({
+            icon: 'success',
+            title: 'Appointment Confirmed!',
+            html: `<p>Your ${deptName} appointment has been booked for ${result.appointment.date}.</p>`,
+            confirmButtonColor: currentDepartment === 'dental' ? '#1976d2' : '#388e3c'
           });
+          window.location.href = 'student_dashboard.php';
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Booking Failed",
-            text: result.message,
-            confirmButtonColor: "#d32f2f"
+          Swal.fire({ 
+            icon: 'error', 
+            title: 'Booking Failed', 
+            text: result.message || 'Unknown error occurred'
           });
         }
       } catch (error) {
-        console.error("Error:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "An error occurred. Please try again.",
-          confirmButtonColor: "#d32f2f"
+        console.error('Submission error:', error);
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error', 
+          text: error.message || 'An error occurred while booking'
         });
       }
+    }
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      if (pollAbortController) {
+        pollAbortController.abort();
+      }
     });
-
-    prevMonthBtn.addEventListener("click", () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      renderCalendar();
-    });
-
-    nextMonthBtn.addEventListener("click", () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      renderCalendar();
-    });
-
-    renderCalendar();
   </script>
 </body>
 </html>

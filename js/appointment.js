@@ -1,57 +1,109 @@
-// ==========================================
-// APPOINTMENTS MANAGEMENT WITH CALENDAR API
-// ==========================================
-
-// API Endpoints - FIXED PATHS
 const APPOINTMENT_API = '../crud/appointment_handler.php';
 const CALENDAR_API = '../api/calendar_api.php';
+const DOCTOR_SCHEDULE_API = '../api/doctor_schedule_api.php';
 
-
-
-// Doctor availability (Monday-Wednesday)
-const DOCTOR_AVAILABLE_DAYS = [1, 2, 3];
-
-// State
+let doctorAvailableDays = [];
 let appointments = [];
 let calendarEvents = [];
 let currentDate = new Date();
 let activeTab = 'today';
 let isLoading = false;
 
-// ==========================================
-// INITIALIZATION
-// ==========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('=== Initializing Appointment Management ===');
-  console.log('Current date:', currentDate);
-  console.log('API Endpoints:', { APPOINTMENT_API, CALENDAR_API });
+// Enhanced logging function
+function logDebug(category, message, data = null) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] [${category}] ${message}`;
   
-  // Check if required elements exist
+  if (data) {
+    console.log(logMessage, data);
+  } else {
+    console.log(logMessage);
+  }
+  
+  // Store logs for debugging
+  if (!window.debugLogs) window.debugLogs = [];
+  window.debugLogs.push({ timestamp, category, message, data });
+}
+
+// Error handler with detailed logging
+function handleError(context, error, showUser = true) {
+  logDebug('ERROR', `${context}:`, {
+    message: error.message,
+    stack: error.stack,
+    error: error
+  });
+  
+  if (showUser) {
+    showNotification(`Error: ${error.message || 'Something went wrong'}`, true);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  logDebug('INIT', '=== Initializing Appointment Management ===');
+
   const calendar = document.getElementById('calendar');
   const appointmentsContent = document.getElementById('appointmentsContent');
-  
-  if (!calendar) {
-    console.error('ERROR: Calendar element not found!');
+
+  if (!calendar || !appointmentsContent) {
+    logDebug('ERROR', 'Missing DOM elements', {
+      calendar: !!calendar,
+      appointmentsContent: !!appointmentsContent
+    });
     return;
   }
-  
-  if (!appointmentsContent) {
-    console.error('ERROR: Appointments content element not found!');
-    return;
+
+  logDebug('INIT', 'DOM elements found');
+
+  try {
+    // Load doctor's schedule first
+    await loadDoctorSchedule();
+
+    // Then load everything else
+    initializeEventListeners();
+    await loadAllData();
+
+    // Set up periodic refresh
+    setInterval(async () => {
+      logDebug('REFRESH', 'Auto-refreshing data');
+      await loadAllData();
+    }, 30000);
+    
+    logDebug('INIT', 'Initialization complete');
+  } catch (error) {
+    handleError('Initialization', error);
   }
-  
-  console.log('✓ Required DOM elements found');
-  
-  initializeEventListeners();
-  loadAllData();
-  
-  // Auto-refresh every 30 seconds
-  setInterval(loadAllData, 30000);
 });
 
+async function loadDoctorSchedule() {
+  logDebug('SCHEDULE', 'Loading doctor schedule from:', DOCTOR_SCHEDULE_API);
+  
+  try {
+    const res = await fetch(DOCTOR_SCHEDULE_API);
+    logDebug('SCHEDULE', 'Response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    
+    const data = await res.json();
+    logDebug('SCHEDULE', 'Response data:', data);
+
+    if (data.success && Array.isArray(data.availableDays)) {
+      doctorAvailableDays = data.availableDays;
+      logDebug('SCHEDULE', 'Doctor schedule loaded:', doctorAvailableDays);
+    } else {
+      logDebug('SCHEDULE', 'No schedule data, using default (all days)');
+      doctorAvailableDays = [0, 1, 2, 3, 4, 5, 6];
+    }
+  } catch (error) {
+    handleError('Load Doctor Schedule', error, false);
+    logDebug('SCHEDULE', 'Fallback to all days available');
+    doctorAvailableDays = [0, 1, 2, 3, 4, 5, 6];
+  }
+}
+
 function initializeEventListeners() {
-  console.log('Setting up event listeners...');
+  logDebug('EVENTS', 'Setting up event listeners');
   
   // Tab switching
   document.querySelectorAll('.tab').forEach(tab => {
@@ -65,26 +117,32 @@ function initializeEventListeners() {
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
-      console.log('Previous month:', currentDate);
+      logDebug('NAV', 'Previous month:', currentDate.toISOString());
       renderCalendar();
     });
+  } else {
+    logDebug('ERROR', 'Previous month button not found');
   }
   
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() + 1);
-      console.log('Next month:', currentDate);
+      logDebug('NAV', 'Next month:', currentDate.toISOString());
       renderCalendar();
     });
+  } else {
+    logDebug('ERROR', 'Next month button not found');
   }
 
   // Search
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
     searchInput.addEventListener('input', handleSearch);
+  } else {
+    logDebug('WARN', 'Search input not found');
   }
   
-  console.log('✓ Event listeners attached');
+  logDebug('EVENTS', 'Event listeners attached');
 }
 
 // ==========================================
@@ -93,34 +151,35 @@ function initializeEventListeners() {
 
 async function loadAllData() {
   if (isLoading) {
-    console.log('Already loading data, skipping...');
+    logDebug('LOAD', 'Already loading data, skipping...');
     return;
   }
   
   isLoading = true;
-  console.log('=== Loading All Data ===');
+  logDebug('LOAD', '=== Loading All Data ===');
   
   try {
-    // Show loading state
     showLoadingState();
     
     // Load appointments first (primary data)
+    logDebug('LOAD', 'Step 1: Loading appointments');
     await loadAppointments();
     
     // Load calendar events (secondary data - optional)
+    logDebug('LOAD', 'Step 2: Loading calendar events');
     await loadCalendarEvents().catch(err => {
-      console.warn('Calendar events loading failed (non-critical):', err);
+      logDebug('WARN', 'Calendar events loading failed (non-critical):', err);
     });
     
     // Merge and render
+    logDebug('LOAD', 'Step 3: Merging and rendering');
     mergeCalendarData();
     renderCalendar();
     renderAppointments();
     
-    console.log('✓ All data loaded successfully');
+    logDebug('LOAD', '✓ All data loaded successfully');
   } catch (error) {
-    console.error('❌ Error loading data:', error);
-    showNotification('Failed to load appointment data', true);
+    handleError('Load All Data', error);
     
     // Still try to render with whatever data we have
     renderCalendar();
@@ -131,18 +190,37 @@ async function loadAllData() {
 }
 
 async function loadAppointments() {
-  console.log('Loading appointments from:', APPOINTMENT_API);
+  const url = `${APPOINTMENT_API}?action=list`;
+  logDebug('APPOINTMENTS', 'Loading appointments from:', url);
   
   try {
-    const response = await fetch(`${APPOINTMENT_API}?action=list`);
-    console.log('Appointments response status:', response.status);
+    const response = await fetch(url);
+    logDebug('APPOINTMENTS', 'Response status:', response.status);
+    logDebug('APPOINTMENTS', 'Response headers:', {
+      contentType: response.headers.get('content-type'),
+      status: response.status,
+      statusText: response.statusText
+    });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      logDebug('APPOINTMENTS', 'Error response body:', errorText);
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
-    const result = await response.json();
-    console.log('Appointments result:', result);
+    const responseText = await response.text();
+    logDebug('APPOINTMENTS', 'Raw response:', responseText.substring(0, 500));
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      logDebug('ERROR', 'JSON parse error:', parseError);
+      logDebug('ERROR', 'Response was:', responseText);
+      throw new Error('Invalid JSON response from server');
+    }
+    
+    logDebug('APPOINTMENTS', 'Parsed result:', result);
 
     if (result.success && Array.isArray(result.data)) {
       appointments = result.data.map(apt => ({
@@ -159,19 +237,22 @@ async function loadAppointments() {
         calendarEventId: apt.calendar_event_id
       }));
       
-      console.log(`✓ Loaded ${appointments.length} appointments`);
+      logDebug('APPOINTMENTS', `✓ Loaded ${appointments.length} appointments`, {
+        count: appointments.length,
+        sample: appointments[0]
+      });
     } else {
       throw new Error(result.error || 'Invalid response format');
     }
   } catch (error) {
-    console.error('❌ Error loading appointments:', error);
+    handleError('Load Appointments', error);
     appointments = [];
     throw error;
   }
 }
 
 async function loadCalendarEvents() {
-  console.log('Loading calendar events from:', CALENDAR_API);
+  logDebug('CALENDAR', 'Loading calendar events');
   
   try {
     // Get events for current month ±1 month
@@ -182,31 +263,34 @@ async function loadCalendarEvents() {
     const timeMax = endDate.toISOString();
     
     const url = `${CALENDAR_API}?action=list&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
-    console.log('Calendar events URL:', url);
+    logDebug('CALENDAR', 'Calendar events URL:', url);
     
     const response = await fetch(url);
-    console.log('Calendar events response status:', response.status);
+    logDebug('CALENDAR', 'Response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
     
     const result = await response.json();
-    console.log('Calendar events result:', result);
+    logDebug('CALENDAR', 'Calendar events result:', result);
 
     if (result.success && result.data?.items) {
       calendarEvents = result.data.items;
-      console.log(`✓ Loaded ${calendarEvents.length} calendar events`);
+      logDebug('CALENDAR', `✓ Loaded ${calendarEvents.length} calendar events`);
     } else {
       calendarEvents = [];
-      console.log('No calendar events loaded');
+      logDebug('CALENDAR', 'No calendar events loaded');
     }
   } catch (error) {
-    console.error('❌ Error loading calendar events:', error);
+    handleError('Load Calendar Events', error, false);
     calendarEvents = [];
   }
 }
 
 function mergeCalendarData() {
-  console.log('Merging calendar data...');
+  logDebug('MERGE', 'Merging calendar data');
   
-  // Match appointments with calendar events
   let syncedCount = 0;
   appointments.forEach(apt => {
     if (apt.calendarEventId) {
@@ -219,7 +303,7 @@ function mergeCalendarData() {
     }
   });
   
-  console.log(`✓ Merged data: ${syncedCount} appointments synced with calendar`);
+  logDebug('MERGE', `✓ Merged data: ${syncedCount}/${appointments.length} appointments synced with calendar`);
 }
 
 // ==========================================
@@ -227,11 +311,11 @@ function mergeCalendarData() {
 // ==========================================
 
 function renderCalendar() {
-  console.log('=== Rendering Calendar ===');
+  logDebug('RENDER', '=== Rendering Calendar ===');
   
   const calendar = document.getElementById('calendar');
   if (!calendar) {
-    console.error('❌ Calendar element not found!');
+    logDebug('ERROR', 'Calendar element not found!');
     return;
   }
   
@@ -242,7 +326,13 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  console.log('Calendar month:', { year, month, firstDay, lastDay });
+  logDebug('RENDER', 'Calendar details:', {
+    year,
+    month: month + 1,
+    firstDay: firstDay.toISOString(),
+    lastDay: lastDay.toISOString(),
+    daysInMonth: lastDay.getDate()
+  });
 
   // Update month/year display
   const monthYearEl = document.getElementById('monthYear');
@@ -264,7 +354,7 @@ function renderCalendar() {
 
   // Empty cells before first day
   const startDay = firstDay.getDay();
-  console.log(`Adding ${startDay} empty cells before first day`);
+  logDebug('RENDER', `Adding ${startDay} empty cells before first day`);
   for (let i = 0; i < startDay; i++) {
     const empty = document.createElement('div');
     empty.className = 'day-cell other-month';
@@ -273,7 +363,7 @@ function renderCalendar() {
 
   // Days of month
   const totalDays = lastDay.getDate();
-  console.log(`Rendering ${totalDays} days`);
+  logDebug('RENDER', `Rendering ${totalDays} days`);
   
   for (let day = 1; day <= totalDays; day++) {
     const date = new Date(year, month, day);
@@ -281,7 +371,7 @@ function renderCalendar() {
     const dayAppointments = appointments.filter(
       a => a.date === dateString && a.status !== 'cancelled'
     );
-    const isAvailable = DOCTOR_AVAILABLE_DAYS.includes(date.getDay());
+    const isAvailable = doctorAvailableDays.includes(date.getDay());
     const isPast = date < today;
 
     const dayCell = document.createElement('div');
@@ -333,21 +423,18 @@ function renderCalendar() {
     calendar.appendChild(dayCell);
   }
   
-  console.log('✓ Calendar rendered successfully');
+  logDebug('RENDER', '✓ Calendar rendered successfully');
 }
 
 function handleDayClick(date, appointments) {
-  console.log('Day clicked:', date, 'Appointments:', appointments.length);
+  logDebug('CLICK', 'Day clicked:', { date, appointmentCount: appointments.length });
   
   if (appointments.length === 0) {
     showNotification('No appointments for this date', false);
     return;
   }
   
-  // Filter to show appointments for this date
   activeTab = 'today';
-  
-  // Update active tab UI
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector('.tab[data-tab="today"]')?.classList.add('active');
   
@@ -359,16 +446,20 @@ function handleDayClick(date, appointments) {
 // ==========================================
 
 function renderAppointments(customList = null) {
-  console.log('=== Rendering Appointments ===');
+  logDebug('RENDER', '=== Rendering Appointments ===');
   
   const content = document.getElementById('appointmentsContent');
   if (!content) {
-    console.error('❌ Appointments content element not found!');
+    logDebug('ERROR', 'Appointments content element not found!');
     return;
   }
 
   const filtered = customList || appointments.filter(a => a.status === activeTab);
-  console.log(`Showing ${filtered.length} appointments for tab: ${activeTab}`);
+  logDebug('RENDER', `Showing ${filtered.length} appointments`, {
+    tab: activeTab,
+    totalAppointments: appointments.length,
+    filtered: filtered.length
+  });
 
   if (filtered.length === 0) {
     content.innerHTML = `
@@ -435,7 +526,7 @@ function renderAppointments(customList = null) {
     </div>
   `).join('');
   
-  console.log('✓ Appointments rendered');
+  logDebug('RENDER', '✓ Appointments rendered');
 }
 
 function showLoadingState() {
@@ -457,7 +548,7 @@ function showLoadingState() {
 // ==========================================
 
 async function syncAppointment(appointmentId) {
-  console.log('Syncing appointment:', appointmentId);
+  logDebug('SYNC', 'Syncing appointment:', appointmentId);
   
   try {
     showNotification('Syncing to Google Calendar...');
@@ -466,8 +557,9 @@ async function syncAppointment(appointmentId) {
       method: 'POST'
     });
     
+    logDebug('SYNC', 'Sync response status:', response.status);
     const result = await response.json();
-    console.log('Sync result:', result);
+    logDebug('SYNC', 'Sync result:', result);
 
     if (result.success) {
       showNotification('✓ Successfully synced to Google Calendar');
@@ -476,13 +568,12 @@ async function syncAppointment(appointmentId) {
       throw new Error(result.error || 'Sync failed');
     }
   } catch (error) {
-    console.error('❌ Sync error:', error);
-    showNotification('✗ Failed to sync: ' + error.message, true);
+    handleError('Sync Appointment', error);
   }
 }
 
 async function cancelAppointment(appointmentId) {
-  console.log('Cancelling appointment:', appointmentId);
+  logDebug('CANCEL', 'Cancelling appointment:', appointmentId);
   
   if (!confirm('Are you sure you want to cancel this appointment?')) {
     return;
@@ -495,8 +586,9 @@ async function cancelAppointment(appointmentId) {
       method: 'POST'
     });
     
+    logDebug('CANCEL', 'Cancel response status:', response.status);
     const result = await response.json();
-    console.log('Cancel result:', result);
+    logDebug('CANCEL', 'Cancel result:', result);
 
     if (result.success) {
       showNotification('✓ Appointment cancelled');
@@ -505,8 +597,7 @@ async function cancelAppointment(appointmentId) {
       throw new Error(result.error || 'Failed to cancel');
     }
   } catch (error) {
-    console.error('❌ Cancel error:', error);
-    showNotification('✗ Failed to cancel: ' + error.message, true);
+    handleError('Cancel Appointment', error);
   }
 }
 
@@ -515,17 +606,18 @@ async function cancelAppointment(appointmentId) {
 // ==========================================
 
 function handleTabSwitch(e) {
-  console.log('Tab switched to:', e.target.dataset.tab);
+  const tab = e.target.dataset.tab;
+  logDebug('TAB', 'Tab switched to:', tab);
   
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   e.target.classList.add('active');
-  activeTab = e.target.dataset.tab;
+  activeTab = tab;
   renderAppointments();
 }
 
 function handleSearch(e) {
   const searchTerm = e.target.value.toLowerCase().trim();
-  console.log('Search:', searchTerm);
+  logDebug('SEARCH', 'Search term:', searchTerm);
   
   if (!searchTerm) {
     renderAppointments();
@@ -539,6 +631,7 @@ function handleSearch(e) {
     (a.notes && a.notes.toLowerCase().includes(searchTerm))
   );
   
+  logDebug('SEARCH', `Found ${filtered.length} matching appointments`);
   renderAppointments(filtered);
 }
 
@@ -576,12 +669,16 @@ function formatDate(dateString) {
 }
 
 function showNotification(message, isError = false) {
-  console.log(`Notification [${isError ? 'ERROR' : 'INFO'}]:`, message);
+  logDebug('NOTIFY', `${isError ? 'ERROR' : 'INFO'}: ${message}`);
   
   const status = document.getElementById('syncStatus');
   const messageEl = document.getElementById('syncMessage');
 
-  if (!status || !messageEl) return;
+  if (!status || !messageEl) {
+    console.warn('Notification elements not found, using alert');
+    if (isError) alert(message);
+    return;
+  }
 
   messageEl.textContent = message;
   status.className = 'sync-status show' + (isError ? ' error' : '');
@@ -592,10 +689,44 @@ function showNotification(message, isError = false) {
 }
 
 // ==========================================
+// DEBUG HELPERS
+// ==========================================
+
+// Export debug functions to window
+window.getDebugLogs = function() {
+  return window.debugLogs || [];
+};
+
+window.exportDebugLogs = function() {
+  const logs = window.getDebugLogs();
+  const dataStr = JSON.stringify(logs, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+  const exportFileDefaultName = `debug-logs-${new Date().toISOString()}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+};
+
+window.clearDebugLogs = function() {
+  window.debugLogs = [];
+  logDebug('DEBUG', 'Debug logs cleared');
+};
+
+// ==========================================
 // EXPORT FOR INLINE ONCLICK HANDLERS
 // ==========================================
 
 window.syncAppointment = syncAppointment;
 window.cancelAppointment = cancelAppointment;
 
-console.log('✓ appointments.js loaded successfully');
+logDebug('INIT', '✓ appointments.js loaded successfully');
+
+// Log initial state
+logDebug('CONFIG', 'API Configuration:', {
+  APPOINTMENT_API,
+  CALENDAR_API,
+  DOCTOR_SCHEDULE_API
+});

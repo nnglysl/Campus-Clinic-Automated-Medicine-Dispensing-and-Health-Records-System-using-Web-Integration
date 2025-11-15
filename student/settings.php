@@ -6,16 +6,26 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
 
-$user = [
-    'id' => $_SESSION['user_id'],
-    'fname' => $_SESSION['fname'] ?? 'Student',
-    'lname' => $_SESSION['lname'] ?? '',
-    'role' => $_SESSION['role'] ?? 'student'
+// ✅ Define user info safely
+$user_id = $_SESSION['user_id'];
+$first_name = $_SESSION['fname'] ?? 'Admin';
+$last_name = $_SESSION['lname'] ?? '';
+$user_role = $_SESSION['role'] ?? 'admin';
+$fullName = trim($first_name . ' ' . $last_name);
+
+// Log session info for debugging
+error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'NOT SET'));
+error_log("User info: " . print_r($_SESSION, true));
+
+$loggedInPhysician = [
+    'name' => $fullName,
+    'id' => $user_id
 ];
 
 $pdo = getDB();
@@ -43,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         
         // Verify current password
         $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
-        $stmt->execute([$user['id']]);
+        $stmt->execute([$user_id]);
         $userData = $stmt->fetch();
         
         if (!$userData || !password_verify($currentPassword, $userData['password'])) {
@@ -54,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         // Update password
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$hashedPassword, $user['id']]);
+        $stmt->execute([$hashedPassword, $user_id]);
         
         echo json_encode(['success' => true, 'message' => 'Password changed successfully!']);
         exit();
@@ -72,11 +82,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Student Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../employee/nav.css">
-    <link rel="stylesheet" href="../employee/settings.css">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        background: #f5f5f5;
+        color: #333;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .content-area {
+        flex: 1;
+        padding: 2rem;
+        height: calc(100vh - var(--header-h));
+        overflow-y: auto;
+        background: transparent;
+      }
+
+      /* Scrollbar styling */
+      .content-area::-webkit-scrollbar {
+        width: 8px;
+      }
+      .content-area::-webkit-scrollbar-thumb {
+        background: #bbb;
+        border-radius: 4px;
+      }
+      .content-area::-webkit-scrollbar-thumb:hover {
+        background: #999;
+      }
+
+      h2 {
+        font-weight: 600;
+        margin-bottom: 2rem;
+      }
+      .password-section {
+        background: #fff;
+        padding: 2.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .password-section h3 {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
+
+      .password-section .form-label {
+        font-weight: 500;
+        color: #333;
+      }
+
+      .password-section .form-control {
+        border-radius: 6px;
+        padding: 0.65rem;
+        font-size: 1rem;
+        height: 45px;
+      }
+
+      .password-section .form-control:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.1rem rgba(139, 0, 0, 0.25);
+      }
+
+      .password-section .btn-primary {
+        background-color: var(--accent);
+        border: none;
+        padding: 0.65rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: background-color 0.3s;
+      }
+
+      .password-section .btn-primary:hover {
+        background-color: #6b0000;
+      }
+        button.btn.btn-primary,
+        .btn.btn-primary {
+        background-color: #6b0000 !important; /* black background */
+        color: #ffffff !important; /* white text */
+        border: none !important;
+        padding: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 8px;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button.btn.btn-primary:hover,
+        .btn.btn-primary:hover {
+        background-color: #a51515ff !important; /* dark gray hover */
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button.btn.btn-primary:active,
+        .btn.btn-primary:active {
+        background-color: #111111 !important;
+        transform: scale(0.98);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+
+      .alert {
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+      }
+
+      .alert-success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .alert-error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
 </head>
 <body>
     <!-- HEADER -->
@@ -91,10 +235,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             </div>
         </div>
 
-        <div class="header-icons">
-            <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-            <div class="logout-icon" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
-        </div>
+    <div class="header-icons">
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+    </div>
     </div>
 
     <!-- Main Container -->
@@ -149,8 +293,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <script src="../js/logout.js"></script>
     <script>
+        
         // Password change functionality
         const passwordForm = document.getElementById('passwordForm');
         const passwordSuccessMessage = document.getElementById('passwordSuccessMessage');

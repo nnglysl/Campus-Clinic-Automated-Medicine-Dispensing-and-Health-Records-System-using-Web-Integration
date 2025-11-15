@@ -92,22 +92,14 @@ function formatTime($time) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Health Records</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet">
-
-  <!-- External CSS -->
   <link href="../student/css/nav.css" rel="stylesheet" />
   <link href="../student/css/records.css" rel="stylesheet">
 </head>
 
 <body>
-  <div class="layout">
     <!-- Header -->
     <div class="header">
       <div class="logo-section">
@@ -120,9 +112,9 @@ function formatTime($time) {
         </div>
       </div>
       <div class="header-icons">
-        <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-        <div class="logout-icon" id="logoutBtn" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
-      </div>
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+    </div>
     </div>
 
     <!-- Sidebar + Content -->
@@ -142,7 +134,7 @@ function formatTime($time) {
         <div id="recordsListView">
           <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center mb-4">
-              <h2 class="fw-bold">My Health Records</h2>
+              <h2>My Health Records</h2>
             </div>
 
             <h5 class="text-secondary mb-3">Medical History</h5>
@@ -311,6 +303,8 @@ function formatTime($time) {
 
   <!-- ===== JS ===== -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../js/logout.js"></script>
   <script>
     // Medical records data from PHP
     const medicalRecords = <?php echo json_encode($medicalRecords, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;

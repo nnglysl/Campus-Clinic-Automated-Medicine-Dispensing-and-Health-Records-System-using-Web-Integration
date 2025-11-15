@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 $userName = $_SESSION['fname'] . ' ' . ($_SESSION['lname'] ?? '');
 
-// Handle Add Employee Form Submission
+// Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
     
@@ -68,6 +68,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $pdo->commit();
             
             echo json_encode(['success' => true, 'message' => 'Employee added successfully']);
+            exit();
+            
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            exit();
+        }
+    }
+    
+    if ($_POST['action'] === 'edit_employee') {
+        try {
+            // Validate input
+            $employee_id = $_POST['employee_id'];
+            $first_name = trim($_POST['first_name']);
+            $middle_name = trim($_POST['middle_name'] ?? '');
+            $last_name = trim($_POST['last_name']);
+            $birth_date = $_POST['birth_date'];
+            $gender = $_POST['gender'];
+            $email = trim($_POST['email']);
+            $phone = trim($_POST['phone']);
+            $address = trim($_POST['address']);
+            $role = $_POST['role'];
+            $password = $_POST['password'] ?? '';
+            
+            // Calculate age
+            $birthDate = new DateTime($birth_date);
+            $today = new DateTime();
+            $age = $today->diff($birthDate)->y;
+            
+            // Get current employee email
+            $stmt = $pdo->prepare("SELECT email FROM employees WHERE id = ?");
+            $stmt->execute([$employee_id]);
+            $currentEmployee = $stmt->fetch();
+            
+            // Check if new email already exists (excluding current employee)
+            if ($email !== $currentEmployee['email']) {
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    echo json_encode(['success' => false, 'message' => 'Email already exists']);
+                    exit();
+                }
+            }
+            
+            // Start transaction
+            $pdo->beginTransaction();
+            
+            // Update users table
+            if (!empty($password)) {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, password = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE email = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $hashed_password, $role, $birth_date, $gender, $address, $currentEmployee['email']]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE email = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $role, $birth_date, $gender, $address, $currentEmployee['email']]);
+            }
+            
+            // Update employees table
+            if (!empty($password)) {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE employees SET first_name = ?, middle_name = ?, last_name = ?, birth_date = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?, role = ?, password = ? WHERE id = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $birth_date, $age, $gender, $email, $phone, $address, $role, $hashed_password, $employee_id]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE employees SET first_name = ?, middle_name = ?, last_name = ?, birth_date = ?, age = ?, gender = ?, email = ?, phone = ?, address = ?, role = ? WHERE id = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $birth_date, $age, $gender, $email, $phone, $address, $role, $employee_id]);
+            }
+            
+            $pdo->commit();
+            
+            echo json_encode(['success' => true, 'message' => 'Employee updated successfully']);
             exit();
             
         } catch (Exception $e) {
@@ -135,7 +205,6 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch today's schedules
 $today = date('Y-m-d');
-// Around line 90, update the SQL query to include schedule_type:
 $stmt = $pdo->prepare("
     SELECT 
         u.id as user_id,
@@ -160,11 +229,10 @@ $stmt = $pdo->prepare("
         END as availability_status
     FROM users u
     LEFT JOIN doctor_schedules ds ON u.id = ds.user_id 
-        AND ds.schedule_date = ? 
-        AND ds.is_available = 1
+        AND ds.schedule_date = ?
     LEFT JOIN attendance att ON u.id = att.user_id 
         AND att.date = CURDATE()
-    WHERE u.role IN ('doctor', 'nurse', 'staff', 'employee')
+    WHERE u.role IN ('doctor', 'dentist', 'nurse', 'staff', 'employee')
     ORDER BY u.lname ASC, u.fname ASC
 ");
 $stmt->execute([$today]);
@@ -177,8 +245,8 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Management</title>
   
-  <link href="../admin/userManagement.css" rel="stylesheet">
-  <link href="../admin/nav.css" rel="stylesheet">
+  <link href="../admin/css/userManagement.css" rel="stylesheet">
+  <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,7 +269,7 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="header-icons">
       <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
-      <div class="logout-icon" onclick="logout()"><i class="bi bi-box-arrow-right"></i></div>
+      <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
 
@@ -265,8 +333,16 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                   </select>
                 </div>
                 <div class="col-md-3">
+  <label class="form-label fw-bold"><i class="bi bi-hospital"></i> Department</label>
+  <select id="scheduleDepartment" class="form-select">
+    <option value="all" selected>All Departments</option>
+    <option value="medical">Medical</option>
+    <option value="dental">Dental</option>
+  </select>
+</div>
+                <div class="col-md-3">
                   <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Specific Date</label>
-                  <input type="date" id="scheduleDatePicker" class="form-control" value="<?php echo date('Y-m-d'); ?>">
+                  <input type="date" id="scheduleDatePicker" class="form-control" value="<?php echo date('Y-m-d'); ?>" max="2099-12-31">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label fw-bold"><i class="bi bi-search"></i> Search Employee</label>
@@ -320,63 +396,64 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                   </div>
                   <div class="employee-schedule-details">
-                    <?php if ($emp['time_in'] && $emp['is_available']): ?>
-  <?php if ($emp['schedule_type'] === 'unavailable'): ?>
-    <div class="text-center">
-      <span class="availability-badge availability-unavailable">
-        <i class="bi bi-calendar-x"></i> Unavailable
-        <?php if ($emp['reason']): ?>
-          <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.8;">
-            <?php echo htmlspecialchars($emp['reason']); ?>
-          </small>
-        <?php endif; ?>
-      </span>
-    </div>
-  <?php else: ?>
-                      <div class="schedule-table d-flex text-center">
-                        <div class="flex-fill border-end p-2">
-                          <small class="text-muted d-block">Schedule</small>
-                          <strong><?php echo date('g:i A', strtotime($emp['time_in'])); ?> - <?php echo date('g:i A', strtotime($emp['time_out'])); ?></strong>
-                        </div>
-                        <div class="flex-fill border-end p-2">
-                          <small class="text-muted d-block">Duration</small>
-                          <strong>
-                            <?php
-                            $start = new DateTime($emp['time_in']);
-                            $end = new DateTime($emp['time_out']);
-                            $diff = $start->diff($end);
-                            echo $diff->h . 'h ' . $diff->i . 'm';
-                            ?>
-                          </strong>
-                        </div>
-                        <div class="flex-fill border-end p-2">
-                          <small class="text-muted d-block">Attendance Status</small>
-                          <?php
-                          $status = $emp['availability_status'] ?? 'out';
-                          $badges = [
-                            'in' => '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
-                            'out' => '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
-                            'break' => '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
-                          ];
-                          echo $badges[$status];
-                          ?>
-                        </div>
-                        <div class="flex-fill p-2">
-                          <small class="text-muted d-block">Last Check-in</small>
-                          <strong style="font-size: 0.85rem;">
-                            <?php echo $emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : 'N/A'; ?>
-                          </strong>
-                        </div>
-                      </div>
-                    <?php else: ?>
-  <div class="text-center">
-    <span class="availability-badge availability-unavailable">
-      <i class="bi bi-calendar-x"></i> Unavailable
-    </span>
+    <?php if ($emp['time_in'] && $emp['is_available']): ?>
+      <?php if ($emp['schedule_type'] === 'unavailable'): ?>
+        <div class="text-center">
+          <span class="availability-badge availability-unavailable">
+            <i class="bi bi-calendar-x"></i> Unavailable
+            <?php if ($emp['reason']): ?>
+              <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.8;">
+                <?php echo htmlspecialchars($emp['reason']); ?>
+              </small>
+            <?php endif; ?>
+          </span>
+        </div>
+      <?php else: ?>
+        <div class="schedule-table d-flex text-center">
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Schedule</small>
+            <strong><?php echo date('g:i A', strtotime($emp['time_in'])); ?> - <?php echo date('g:i A', strtotime($emp['time_out'])); ?></strong>
+          </div>
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Duration</small>
+            <strong>
+              <?php
+              $start = new DateTime($emp['time_in']);
+              $end = new DateTime($emp['time_out']);
+              $diff = $start->diff($end);
+              echo $diff->h . 'h ' . $diff->i . 'm';
+              ?>
+            </strong>
+          </div>
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Attendance Status</small>
+            <?php
+            $status = $emp['availability_status'] ?? 'out';
+            $badges = [
+              'in' => '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
+              'out' => '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
+              'break' => '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
+            ];
+            echo $badges[$status];
+            ?>
+          </div>
+          <div class="flex-fill p-2">
+            <small class="text-muted d-block">Last Check-in</small>
+            <strong style="font-size: 0.85rem;">
+              <?php echo $emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : 'N/A'; ?>
+            </strong>
+          </div>
+        </div>
+      <?php endif; ?>
+    <?php else: ?>
+      <div class="text-center">
+        <span class="availability-badge availability-unavailable">
+          <i class="bi bi-calendar-x"></i> Unavailable
+        </span>
+      </div>
+    <?php endif; ?>
   </div>
-<?php endif; ?>
-                  </div>
-                </div>
+</div>
                 <?php endforeach; ?>
               <?php endif; ?>
             </div>
@@ -424,6 +501,7 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
 
+  <!-- Add Employee Modal -->
   <!-- Add Employee Modal -->
   <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -487,7 +565,8 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <label class="form-label">Role *</label>
                 <select class="form-control" name="role" required>
                   <option value="">Select Role</option>
-                  <option value="doctor">Doctor</option>
+                  <option value="doctor">Medical Doctor</option>
+                  <option value="dentist">Dentist</option>
                   <option value="nurse">Nurse</option>
                   <option value="staff">Staff</option>
                 </select>
@@ -510,427 +589,100 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
 
+  <!-- Edit Employee Modal -->
+  <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editEmployeeModalLabel">
+            <i class="bi bi-pencil-square"></i> Edit Employee
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editEmployeeForm">
+            <input type="hidden" id="edit_employee_id" name="employee_id">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">First Name *</label>
+                <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Middle Name</label>
+                <input type="text" class="form-control" id="edit_middle_name" name="middle_name">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Last Name *</label>
+                <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Birth Date *</label>
+                <input type="date" class="form-control" id="edit_birth_date" name="birth_date" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Gender *</label>
+                <select class="form-control" id="edit_gender" name="gender" required>
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control" id="edit_email" name="email" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phone *</label>
+                <input type="tel" class="form-control" id="edit_phone" name="phone" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Address *</label>
+              <textarea class="form-control" id="edit_address" name="address" rows="2" required></textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Role *</label>
+                <select class="form-control" id="edit_role" name="role" required>
+                  <option value="">Select Role</option>
+                  <option value="doctor">Medical Doctor</option>
+                  <option value="dentist">Dentist</option>
+                  <option value="nurse">Nurse</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">New Password (Optional)</label>
+                <input type="password" class="form-control" id="edit_password" name="password" minlength="8">
+                <small class="text-muted">Leave blank to keep current password</small>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitEditEmployee()">
+            <i class="bi bi-check-circle"></i> Update Employee
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  
-  <script>
-    const employees = <?php echo json_encode($employees); ?>;
-    
-    // Auto-refresh schedule every 30 seconds
-    let scheduleRefreshInterval;
-    let searchTimeout;
-    
-    function startScheduleRefresh() {
-      scheduleRefreshInterval = setInterval(() => {
-        const scheduleTab = document.getElementById('schedule');
-        if (scheduleTab && scheduleTab.classList.contains('active')) {
-          refreshSchedule();
-        }
-      }, 30000);
-    }
-    
-    function stopScheduleRefresh() {
-      if (scheduleRefreshInterval) {
-        clearInterval(scheduleRefreshInterval);
-      }
-    }
-    
-    // Enhanced refresh function with filters
-    function refreshSchedule() {
-      const refreshBtn = document.querySelector('.btn-outline-success');
-      const originalText = refreshBtn.innerHTML;
-      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm"></i> Refreshing...';
-      refreshBtn.disabled = true;
-      
-      const viewType = document.getElementById('scheduleViewType').value;
-      const date = document.getElementById('scheduleDatePicker').value;
-      const search = document.getElementById('scheduleSearch').value;
-      
-      let url = 'refresh_schedule.php?';
-      const params = new URLSearchParams();
-      
-      if (viewType === 'today' && date) {
-        params.append('view', 'today');
-        params.append('date', date);
-      } else {
-        params.append('view', viewType);
-      }
-      
-      if (search) {
-        params.append('search', search);
-      }
-      
-      fetch(url + params.toString())
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            updateScheduleDisplay(data.schedules);
-            updateScheduleHeader(data);
-          } else {
-            console.error('Error:', data.error);
-          }
-          refreshBtn.innerHTML = originalText;
-          refreshBtn.disabled = false;
-        })
-        .catch(error => {
-          console.error('Error refreshing schedule:', error);
-          refreshBtn.innerHTML = originalText;
-          refreshBtn.disabled = false;
-        });
-    }
-    
-    // Update schedule header with count and date info
-    function updateScheduleHeader(data) {
-      document.getElementById('scheduleDateDisplay').innerHTML = 
-        `<i class="bi bi-calendar-week"></i> ${data.dateRangeInfo}`;
-      document.getElementById('scheduleCount').textContent = 
-        `${data.count} Employee(s)`;
-    }
-    
-    // Update schedule display
-    function updateScheduleDisplay(schedules) {
-      const container = document.getElementById('scheduleContainer');
-      if (!container) return;
-      
-      if (schedules.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-5">
-            <i class="bi bi-calendar-x" style="font-size: 3rem; color: #ccc;"></i>
-            <p class="text-muted mt-3">No schedules found</p>
-          </div>
-        `;
-        return;
-      }
-      
-      // Group schedules by date for multi-day views
-      const viewType = document.getElementById('scheduleViewType').value;
-      
-      if (viewType === 'today') {
-        // Single day view
-        container.innerHTML = schedules.map(emp => createEmployeeScheduleCard(emp)).join('');
-      } else {
-        // Multi-day view - group by date
-        const groupedByDate = {};
-        schedules.forEach(emp => {
-          if (emp.schedule_date) {
-            if (!groupedByDate[emp.schedule_date]) {
-              groupedByDate[emp.schedule_date] = [];
-            }
-            groupedByDate[emp.schedule_date].push(emp);
-          }
-        });
-        
-        const sortedDates = Object.keys(groupedByDate).sort();
-        
-        let html = '';
-        sortedDates.forEach(date => {
-          const dateObj = new Date(date + 'T00:00:00');
-          const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-          const formattedDate = dateObj.toLocaleDateString('en-US', options);
-          
-          html += `
-            <div class="mb-4">
-              <div class="date-group-header">
-                <h6 class="text-muted mb-3">
-                  <i class="bi bi-calendar3"></i> ${formattedDate}
-                  <span class="badge bg-secondary ms-2">${groupedByDate[date].length}</span>
-                </h6>
-              </div>
-          `;
-          
-          groupedByDate[date].forEach(emp => {
-            html += createEmployeeScheduleCard(emp);
-          });
-          
-          html += '</div>';
-        });
-        
-        container.innerHTML = html;
-      }
-    }
-    
-    // Create employee schedule card HTML
-    function createEmployeeScheduleCard(emp) {
-      const photoHtml = emp.photo 
-        ? `<img src="${emp.photo}" class="employee-photo-small" alt="${emp.first_name}">`
-        : `<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center">
-             <i class="bi bi-person-fill text-white" style="font-size: 1rem;"></i>
-           </div>`;
-      
-      let scheduleContent;
-      if (emp.time_in && emp.is_available) {
-        const statusBadges = {
-          'in': '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
-          'out': '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
-          'break': '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
-        };
-        
-        scheduleContent = `
-          <div class="schedule-table d-flex text-center">
-            <div class="flex-fill border-end p-2">
-              <small class="text-muted d-block">Schedule</small>
-              <strong>${emp.time_in_formatted || 'N/A'} - ${emp.time_out_formatted || 'N/A'}</strong>
-            </div>
-            <div class="flex-fill border-end p-2">
-              <small class="text-muted d-block">Duration</small>
-              <strong>${emp.duration || 'N/A'}</strong>
-            </div>
-            <div class="flex-fill border-end p-2">
-              <small class="text-muted d-block">Attendance</small>
-              ${statusBadges[emp.availability_status] || statusBadges['out']}
-            </div>
-            <div class="flex-fill p-2">
-              <small class="text-muted d-block">Last Check-in</small>
-              <strong style="font-size: 0.85rem;">${emp.last_check_in || 'N/A'}</strong>
-            </div>
-          </div>
-        `;
-      } else {
-        scheduleContent = `
-          <div class="text-center">
-            <span class="availability-badge availability-unavailable">
-              <i class="bi bi-calendar-x"></i> Unavailable
-            </span>
-          </div>
-        `;
-      }
-      
-      return `
-        <div class="employee-schedule-row">
-          <div class="employee-schedule-info">
-            ${photoHtml}
-            <div>
-              <div><strong>${emp.first_name} ${emp.middle_name ? emp.middle_name + ' ' : ''}${emp.last_name}</strong></div>
-              <div class="text-muted" style="font-size: 0.85rem;">
-                <span class="role-badge role-${emp.role}">
-                  <i class="bi bi-person-badge-fill"></i> ${emp.role. charAt(0).toUpperCase() + emp.role.slice(1)}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="employee-schedule-details">
-            ${scheduleContent}
-          </div>
-        </div>
-      `;
-    }
-    
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      // View type change
-      document.getElementById('scheduleViewType').addEventListener('change', function() {
-        const datePicker = document.getElementById('scheduleDatePicker');
-        if (this.value === 'today') {
-          datePicker.disabled = false;
-        } else {
-          datePicker.disabled = true;
-        }
-        refreshSchedule();
-      });
-      
-      // Date picker change
-      document.getElementById('scheduleDatePicker').addEventListener('change', function() {
-        document.getElementById('scheduleViewType').value = 'today';
-        refreshSchedule();
-      });
-      
-      // Search with debounce
-      document.getElementById('scheduleSearch').addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          refreshSchedule();
-        }, 500);
-      });
-    });
-    
-    // Start auto-refresh when page loads
-    startScheduleRefresh();
-    
-    // Stop refresh when navigating away
-    window.addEventListener('beforeunload', stopScheduleRefresh);
-    
-    // Initialize DataTables
-    $(document).ready(function() {
-      // Active Users Table
-      $('#activeUsersTable').DataTable({
-        data: employees.filter(e => e.status === 'active'),
-        columns: [
-          { 
-            data: 'photo',
-            render: function(data, type, row) {
-              if (data) {
-                return `<img src="${data}" class="employee-photo-small" alt="${row.first_name}">`;
-              }
-              return '<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-person-fill text-white"></i></div>';
-            }
-          },
-          { 
-            data: null,
-            render: function(data, type, row) {
-              return `${row.first_name} ${row.middle_name || ''} ${row.last_name}`.trim();
-            }
-          },
-          { data: 'email' },
-          { data: 'phone' },
-          { 
-            data: 'role',
-            render: function(data) {
-              return `<span class="role-badge role-${data}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
-            }
-          },
-          { 
-            data: 'id',
-            render: function(data, type, row) {
-              return `
-                <button class="btn btn-sm btn-warning" onclick="updateStatus(${data}, 'inactive')">
-                  <i class="bi bi-pause-circle"></i> Deactivate
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${data})">
-                  <i class="bi bi-trash"></i> Delete
-                </button>
-              `;
-            }
-          }
-        ]
-      });
-      
-      // Inactive Users Table
-      $('#inactiveUsersTable').DataTable({
-        data: employees.filter(e => e.status === 'inactive'),
-        columns: [
-          { 
-            data: 'photo',
-            render: function(data, type, row) {
-              if (data) {
-                return `<img src="${data}" class="employee-photo-small" alt="${row.first_name}">`;
-              }
-              return '<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-person-fill text-white"></i></div>';
-            }
-          },
-          { 
-            data: null,
-            render: function(data, type, row) {
-              return `${row.first_name} ${row.middle_name || ''} ${row.last_name}`.trim();
-            }
-          },
-          { data: 'email' },
-          { data: 'phone' },
-          { 
-            data: 'role',
-            render: function(data) {
-              return `<span class="role-badge role-${data}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
-            }
-          },
-          { 
-            data: 'id',
-            render: function(data) {
-              return `
-                <button class="btn btn-sm btn-success" onclick="updateStatus(${data}, 'active')">
-                  <i class="bi bi-check-circle"></i> Activate
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${data})">
-                  <i class="bi bi-trash"></i> Delete
-                </button>
-              `;
-            }
-          }
-        ]
-      });
-    });
-    
-    // Submit Add Employee Form
-    function submitAddEmployee() {
-      const form = document.getElementById('addEmployeeForm');
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-      
-      const formData = new FormData(form);
-      formData.append('action', 'add_employee');
-      
-      fetch('userManagement.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(data.message);
-          location.reload();
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(error => {
-        alert('Error adding employee: ' + error);
-      });
-    }
-    
-    // Update Employee Status
-    function updateStatus(employeeId, status) {
-      if (!confirm(`Are you sure you want to ${status === 'active' ? 'activate' : 'deactivate'} this employee?`)) {
-        return;
-      }
-      
-      const formData = new FormData();
-      formData.append('action', 'update_status');
-      formData.append('employee_id', employeeId);
-      formData.append('status', status);
-      
-      fetch('userManagement.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(data.message);
-          location.reload();
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(error => {
-        alert('Error updating status: ' + error);
-      });
-    }
-    
-    // Delete Employee
-    function deleteEmployee(employeeId) {
-      if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
-        return;
-      }
-      
-      const formData = new FormData();
-      formData.append('action', 'delete_employee');
-      formData.append('employee_id', employeeId);
-      
-      fetch('userManagement.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(data.message);
-          location.reload();
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(error => {
-        alert('Error deleting employee: ' + error);
-      });
-    }
-    
-    // Logout Function
-    function logout() {
-      if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '/auth/logout.php';
-      }
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../js/logout.js"></script>
+  <script src="../admin/userManagement.js"></script>
+
 </body>
 </html>

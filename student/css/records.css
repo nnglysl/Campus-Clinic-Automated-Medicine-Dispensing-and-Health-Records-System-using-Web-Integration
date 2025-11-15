@@ -1,27 +1,22 @@
   body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8f9fa;
+      background-color: #ffffff;
       margin: 0;
       padding: 0;
     }
 
-    /* ============================
-       MY HEALTH RECORDS PAGE
-       ============================ */
-
-    /* Page Background + Layout */
-    .content-demo {
+     .content-demo {
       flex: 1;
       padding: 40px;
-      background-color: #dddddd;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #000000;
+      background-color: #ffffff;
       height: calc(100vh - 100px);
       overflow: hidden;
     }
 
     /* Page Title and Button */
     .content-demo h2 {
-      color: #800000;
+      color: #000000;
       font-weight: 700;
     }
 

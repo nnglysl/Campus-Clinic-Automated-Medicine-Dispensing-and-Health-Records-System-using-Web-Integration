@@ -26,10 +26,7 @@
       transition: all 0.3s ease;
     }
 
-    .stat-card:hover {
-      transform: scale(1.05);
-      background-color: #fff2f2;
-    }
+   
 
     .stat-card h4 {
       color: #800000;
@@ -225,3 +222,43 @@
         min-width: 100%;
       }
     }
+
+    /* Add this CSS to the <style> section in student_dashboard.php */
+
+.sync-btn {
+  border: 1px solid #28a745 !important;
+  color: #28a745 !important;
+  font-size: 0.85rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.sync-btn:hover:not(:disabled) {
+  background: #28a745 !important;
+  color: white !important;
+  transform: translateY(-2px);
+}
+
+.sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bi-calendar-check {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.bi-calendar-x {
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
