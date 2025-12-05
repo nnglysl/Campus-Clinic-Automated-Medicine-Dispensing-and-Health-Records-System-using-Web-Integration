@@ -17,10 +17,52 @@
   font-size: 14px;
   color: gray;
 }
+
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* Edit Profile Button Styling */
+.btn.btn-danger#editProfileBtn,
+#editProfileBtn.btn.btn-danger,
+#editProfileBtn {
+  background-color: #660101 !important;
+  border-color: #020000 !important;
+  color: white !important;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn.btn-danger#editProfileBtn:hover,
+#editProfileBtn.btn.btn-danger:hover,
+#editProfileBtn:hover {
+  background-color: #4d0101 !important;
+  border-color: #020000 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 1, 1, 0.3);
+}
+
+.btn.btn-danger#editProfileBtn:active,
+#editProfileBtn.btn.btn-danger:active,
+#editProfileBtn:active {
+  background-color: #330101 !important;
+  border-color: #020000 !important;
+  color: white !important;
+  transform: translateY(0);
+}
+
+.btn.btn-danger#editProfileBtn:focus,
+#editProfileBtn.btn.btn-danger:focus,
+#editProfileBtn:focus {
+  background-color: #660101 !important;
+  border-color: #020000 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.25rem rgba(102, 1, 1, 0.25) !important;
 }
 
 /* ============================
@@ -93,6 +135,29 @@ body, html {
   overflow: hidden;
 }
 
+/* Allow scrolling on mobile/responsive view */
+@media (max-width: 991px) {
+  body, html {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .container,
+  .container-fluid {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -105,10 +170,16 @@ body, html {
   overflow: hidden;
 }
 
-.sidebar {
-  flex-shrink: 0;
-  overflow-y: auto;
+/* Allow scrolling on mobile/responsive view */
+@media (max-width: 991px) {
+  .main-container {
+    overflow: visible;
+    height: auto;
+    min-height: auto;
 }
+}
+
+/* Sidebar styles are handled by nav.css - removed to prevent conflicts */
 
 .content-demo {
   flex: 1;
@@ -163,11 +234,195 @@ body, html {
 #photoInput {
   max-width: 300px;
   margin: 0 auto;
+  padding: 8px;
+  border: 2px dashed #800000;
+  border-radius: 8px;
+  background-color: #fff8f8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#photoInput:hover {
+  background-color: #ffe6e6;
+  border-color: #a00000;
+}
+
+#photoInput:focus {
+  outline: none;
+  border-color: #800000;
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
+}
+
+#photoInput::file-selector-button {
+  padding: 8px 16px;
+  margin-right: 12px;
+  background-color: #800000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+#photoInput::file-selector-button:hover {
+  background-color: #a00000;
 }
 
 #previewPhoto {
   border: 4px solid #800000;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+#previewPhoto:hover {
+  transform: scale(1.05);
+}
+
+/* File upload area styling */
+.photo-upload-area {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.photo-upload-info {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.photo-upload-info .file-size {
+  color: #800000;
+  font-weight: 600;
+}
+
+/* Upload progress indicator */
+.upload-progress {
+  display: none;
+  width: 100%;
+  height: 4px;
+  background-color: #e0e0e0;
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.upload-progress.active {
+  display: block;
+}
+
+.upload-progress-bar {
+  height: 100%;
+  background-color: #800000;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* File validation messages */
+.file-error-message {
+  display: none;
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  padding: 8px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.file-error-message.show {
+  display: block;
+}
+
+.file-success-message {
+  display: none;
+  color: #155724;
+  font-size: 12px;
+  margin-top: 5px;
+  padding: 8px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+}
+
+.file-success-message.show {
+  display: block;
+}
+
+/* ============================
+   INFO GRID LAYOUT - 3 COLUMN
+   ============================ */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 13px;
+}
+
+.info-item p {
+  color: #333;
+  font-size: 14px;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  margin: 0;
+  min-height: 42px;
+}
+
+/* Make specific items span 2 columns in 3-column grid */
+.info-grid .span-2 {
+  grid-column: span 2;
+}
+
+/* 2-column grid for Academic and Medical Information sections */
+.info-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* Make specific items span full width in 2-column grid */
+.info-grid-2 .full-width-2 {
+  grid-column: 1 / -1;
+}
+
+.info-grid-2 .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-grid-2 .info-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 13px;
+}
+
+.info-grid-2 .info-item p {
+  color: #333;
+  font-size: 14px;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  margin: 0;
+  min-height: 42px;
 }
 
 /* ============================
@@ -187,7 +442,13 @@ body, html {
   .stats-section {
     flex-direction: column;
   }
+  
+  .info-grid,
+  .info-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
+
 .profile-info {
   display: flex;
   justify-content: space-between;
@@ -220,6 +481,7 @@ body, html {
   color: #a22c29;
   font-weight: 600;
 }
+
 .profile-info {
   display: flex;
   flex-direction: column;
@@ -247,75 +509,8 @@ body, html {
   color: #a22c29;
   font-weight: 600;
 }
-/* Make stats section stay at bottom visually */
-.stats-section {
-  display: flex;
-  justify-content: space-around;
-  gap: 15px;
-}
 
-.stat-card {
-  background: #fff;
-  border: 10px solid #f8f7f7;  /* ✅ bawat isa may border */
- 
-  padding: 20px;
-  width: 250px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-  transition: 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 12px rgba(0,0,0,0.1);
-}
-
-
-/* Profile Card Section */
-.profile-card {
-  background: #fff;
-  padding: 35px;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: flex-start;
-  gap: 25px;
-  margin-bottom: 40px;
-}
-
-.profile-details h3 {
-  font-size: 1.5rem;
-  color: #800000;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 40px;
-  margin-top: 15px;
-}
-
-/* Stats section moved to bottom */
-.stats-section {
-  display: flex;
-  justify-content: space-around;
-  gap: 20px;
-  background: #fff;
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  text-align: center;
-}
-
-.stat-icon {
-  font-size: 2rem;
-  color: #800000;
-}
-/* Remove outer box sa tatlong stat cards */
+/* Stats section */
 .stats-section {
   display: flex;
   justify-content: space-around;
@@ -326,7 +521,6 @@ body, html {
   box-shadow: none !important;
 }
 
-/* Make each card have its own border only */
 .stat-card {
   background: #fff;
   border: 2px solid #e0e0e0;
@@ -338,8 +532,12 @@ body, html {
   transition: 0.3s;
 }
 
-/* Optional hover effect */
 .stat-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #800000;
 }

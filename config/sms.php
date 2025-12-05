@@ -1,9 +1,21 @@
 <?php
 function sendSms($phoneNumber, $message) {
-  $url = 'https://sms.skyio.site/api/sms/send';
-  $apiKey = 'Ls9HTrWtoOcN2cCCFEavCUfKER8bXty8P97XML0lfQxi2z89SZf8cwEqdatRcLjg'; // Replace with your actual API key
+  if (!isset($_ENV['SMS_API_KEY'])) {
+    if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+      require_once __DIR__ . '/../vendor/autoload.php';
+      $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+      $dotenv->load();
+    }
+  }
   
-  // Format phone number (remove +63, keep 09 format or add +63)
+  $url = $_ENV['SMS_API_URL'] ?? 'https://sms.skyio.site/api/sms/send';
+  $apiKey = $_ENV['SMS_API_KEY'] ?? 'b86a19tKUApQ2jd0HIvMPI85MnzGpDeQoNqHh0qZZoNJSSPDgnB4b1l1CBkkRBET';
+  
+  if (empty($apiKey) || $apiKey === 'YOUR_SMS_API_KEY_HERE') {
+    error_log("SMS API Key not configured. Please set SMS_API_KEY in your .env file.");
+    return ['success' => false, 'error' => 'SMS API key not configured'];
+  }
+  
   $phoneNumber = preg_replace('/[^0-9+]/', '', $phoneNumber);
   if (strpos($phoneNumber, '09') === 0) {
     $phoneNumber = '+63' . substr($phoneNumber, 1);
@@ -38,7 +50,6 @@ function sendSms($phoneNumber, $message) {
   
   curl_close($curl);
   
-  // Log for debugging (remove in production)
   error_log("SMS API Response: " . $response);
   error_log("SMS API HTTP Code: " . $httpCode);
   
@@ -48,7 +59,6 @@ function sendSms($phoneNumber, $message) {
   
   $result = json_decode($response, true);
   
-  // Check for successful response
   if ($httpCode == 200 || $httpCode == 201) {
     return ['success' => true, 'response' => $result];
   }

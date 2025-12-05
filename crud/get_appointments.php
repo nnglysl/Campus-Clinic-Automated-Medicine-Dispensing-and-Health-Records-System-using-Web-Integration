@@ -24,9 +24,10 @@ try {
         case 'get_calendar':
             $month = $_GET['month'] ?? date('m');
             $year = $_GET['year'] ?? date('Y');
+            $appointmentType = $_GET['appointment_type'] ?? null;
             
-            // Get all appointments for the month
-            $stmt = $pdo->prepare("
+            // Get all appointments for the month (excluding deleted)
+            $sql = "
                 SELECT 
                     a.id,
                     a.patient_id,
@@ -44,10 +45,19 @@ try {
                 LEFT JOIN users u ON a.patient_id = u.id
                 WHERE MONTH(a.appointment_date) = ?
                 AND YEAR(a.appointment_date) = ?
-                AND a.status != 'deleted'
-                ORDER BY a.appointment_date, a.appointment_time
-            ");
-            $stmt->execute([$month, $year]);
+                AND a.status != 'deleted'";
+
+            $params = [$month, $year];
+
+            if ($appointmentType) {
+                $sql .= " AND a.appointment_type = ?";
+                $params[] = $appointmentType;
+            }
+
+            $sql .= " ORDER BY a.appointment_date, a.appointment_time";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode([
@@ -98,12 +108,83 @@ try {
                 throw new Exception('Invalid status');
             }
             
+            // Get appointment details before updating for logging
+            $stmt = $pdo->prepare("
+                SELECT 
+                    a.*,
+                    u.fname,
+                    u.lname
+                FROM appointments a
+                JOIN users u ON a.patient_id = u.id
+                WHERE a.id = ?
+            ");
+            $stmt->execute([$id]);
+            $appointment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$appointment) {
+                throw new Exception('Appointment not found');
+            }
+            
+            $oldStatus = $appointment['status'] ?? 'scheduled';
+            
             $stmt = $pdo->prepare("
                 UPDATE appointments
                 SET status = ?, updated_at = NOW()
                 WHERE id = ?
             ");
             $stmt->execute([$status, $id]);
+            
+            // Log appointment status change
+            try {
+                require_once(__DIR__ . '/../includes/appointment_logger.php');
+                $userId = $_SESSION['user_id'] ?? null;
+                if ($userId) {
+                    logAppointmentStatusChange($pdo, $id, $userId, $oldStatus, $status, $appointment);
+                }
+            } catch (Exception $e) {
+                error_log("Failed to log appointment status change: " . $e->getMessage());
+                // Continue even if logging fails
+            }
+            
+            // Create notification if appointment is cancelled
+            if ($status === 'cancelled') {
+                try {
+                    $stmt = $pdo->prepare("
+                        SELECT a.*, u.fname, u.lname
+                        FROM appointments a
+                        JOIN users u ON a.patient_id = u.id
+                        WHERE a.id = ?
+                    ");
+                    $stmt->execute([$id]);
+                    $appointment = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($appointment) {
+                        $patientName = trim($appointment['fname'] . ' ' . $appointment['lname']);
+                        $appointmentDate = date('F j, Y', strtotime($appointment['appointment_date']));
+                        $appointmentTime = date('g:i A', strtotime($appointment['appointment_time']));
+                        $appointmentType = $appointment['appointment_type'];
+                        
+                        $message = "Appointment cancelled: {$appointmentType} appointment on {$appointmentDate} at {$appointmentTime}";
+                        
+                        $data = json_encode([
+                            'appointment_id' => $id,
+                            'appointment_type' => $appointmentType,
+                            'patient_name' => $patientName,
+                            'appointment_date' => $appointment['appointment_date'],
+                            'appointment_time' => $appointment['appointment_time'],
+                            'timestamp' => date('Y-m-d H:i:s')
+                        ]);
+                        
+                        $stmt = $pdo->prepare("
+                            INSERT INTO notifications (type, message, data, status, created_at) 
+                            VALUES ('appointment_cancelled', ?, ?, 'unread', NOW())
+                        ");
+                        $stmt->execute([$message, $data]);
+                    }
+                } catch (Exception $e) {
+                    error_log("Failed to create cancellation notification: " . $e->getMessage());
+                }
+            }
             
             echo json_encode([
                 'success' => true,

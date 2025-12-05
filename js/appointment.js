@@ -730,3 +730,11 @@ logDebug('CONFIG', 'API Configuration:', {
   CALENDAR_API,
   DOCTOR_SCHEDULE_API
 });
+
+// Listen for schedule updates triggered from other dashboards (e.g., Medical profile tab)
+window.addEventListener('scheduleUpdated', () => {
+  logDebug('SCHEDULE', 'Schedule update received, refreshing doctor availability');
+  loadDoctorSchedule()
+    .then(() => loadAllData())
+    .catch(error => handleError('Schedule Refresh', error, false));
+});

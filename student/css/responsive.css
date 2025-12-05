@@ -1,0 +1,534 @@
+/* ==========================================================================
+   GLOBAL RESPONSIVE TOKENS
+   ========================================================================== */
+:root {
+  --layout-gap-lg: clamp(1.5rem, 3vw, 2.5rem);
+  --layout-gap-md: clamp(1rem, 2.5vw, 1.75rem);
+  --layout-gap-sm: clamp(0.75rem, 2vw, 1.25rem);
+  --card-padding-lg: clamp(1.5rem, 3vw, 2rem);
+  --card-padding-sm: clamp(1rem, 2vw, 1.5rem);
+  --border-radius-lg: 20px;
+  --border-radius-md: 16px;
+  --border-radius-sm: 12px;
+}
+
+/* Global fix for full-width layout on mobile */
+@media (max-width: 991px) {
+  /* Remove Bootstrap container margins that create gaps */
+  .container,
+  .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  /* Ensure all main wrappers are full width */
+  .content-wrapper,
+  .appointment-container,
+  .department-selection {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+  }
+}
+
+.content,
+.content-demo {
+  padding: var(--layout-gap-lg);
+  transition: padding 0.2s ease;
+}
+
+.page-header,
+.page-header .page-title {
+  gap: var(--layout-gap-sm);
+  flex-wrap: wrap;
+}
+
+.page-header-actions,
+.header-actions,
+.filter-actions,
+.table-actions,
+.tab-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.cards-row,
+.cards-grid,
+.stats-grid,
+.info-grid,
+.appointments-grid,
+.dashboard-grid {
+  display: grid;
+  gap: var(--layout-gap-md);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--border-radius-md);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.table-wrapper table {
+  min-width: 720px;
+}
+
+.filter-controls,
+.filter-row,
+.form-row,
+.form-grid,
+.action-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--layout-gap-sm);
+}
+
+.form-group,
+.form-control,
+.form-select,
+.input-group {
+  width: 100%;
+}
+
+.card,
+.section-card,
+.tab-card,
+.profile-card,
+.summary-card,
+.stats-card {
+  padding: var(--card-padding-lg);
+  border-radius: var(--border-radius-lg);
+  transition: padding 0.2s ease, border-radius 0.2s ease;
+}
+
+.badge,
+.status-pill,
+.tag {
+  white-space: nowrap;
+}
+
+.modal-dialog {
+  margin: 1.5rem auto;
+}
+
+.chart-wrapper,
+.calendar-wrapper,
+.timeline-wrapper {
+  min-height: 280px;
+}
+
+.table-actions .btn,
+.header-actions .btn,
+.filter-actions .btn,
+.action-toolbar .btn {
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   LARGE LAPTOPS (≤ 1400px)
+   ========================================================================== */
+@media (max-width: 1400px) {
+  .content,
+  .content-demo {
+    padding: var(--layout-gap-md);
+  }
+
+  .cards-grid,
+  .stats-grid,
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .table-wrapper table {
+    min-width: 640px;
+  }
+}
+
+/* ==========================================================================
+   DESKTOP / TABLET LANDSCAPE (≤ 1200px)
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .main-container {
+    gap: 1rem;
+  }
+
+  .sidebar {
+    width: 260px;
+  }
+
+  .content,
+  .content-demo {
+    padding: 1.5rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .table-actions,
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ==========================================================================
+   TABLET (≤ 991px)
+   ========================================================================== */
+@media (max-width: 991px) {
+  .main-container {
+    flex-direction: column;
+    min-height: calc(100vh - 70px);
+  }
+
+  .content,
+  .content-demo {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1.25rem;
+    padding-bottom: calc(1.5rem + 70px);
+    overflow: visible;
+    min-height: auto;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Remove any container margins/padding that might create gaps */
+  .container,
+  .container-fluid {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 0 0 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100vh;
+    overflow-y: auto;
+    box-shadow: 0 -20px 40px rgba(15, 23, 42, 0.25);
+    transform: translateY(110%);
+    transition: transform 0.3s ease;
+    border-radius: 0;
+    z-index: 999;
+    background-color: #6B0D12 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar.active {
+    transform: translateY(0);
+  }
+
+  .sidebar .menu,
+  .sidebar .user-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .sidebar .menu-item {
+    justify-content: flex-start;
+    padding: 0.9rem 1.25rem;
+  }
+
+  .mobile-menu-icon {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.35rem;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 1000;
+    cursor: pointer;
+  }
+
+  /* Overlay is now handled by JavaScript-created element */
+  body.menu-open::before {
+    display: none;
+  }
+
+  /* Only disable body scroll when menu is open, allow scrolling otherwise */
+  body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+  
+  /* Ensure body can scroll when menu is closed */
+  body:not(.menu-open) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: static;
+  }
+  
+  /* Ensure page content can scroll - already handled above but ensure consistency */
+  .main-container {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: calc(100vh - 80px) !important;
+  }
+
+  .menu-overlay {
+    display: none;
+  }
+
+  /* Ensure mobile menu button is above overlay */
+  .mobile-menu-icon {
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Header excluded from responsive flex-direction changes to maintain consistent layout */
+  .page-header,
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cards-grid,
+  .stats-grid,
+  .appointments-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .table-wrapper {
+    border-radius: var(--border-radius-sm);
+  }
+}
+
+/* ==========================================================================
+   TABLET PORTRAIT / LARGE PHONES (≤ 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Ensure full width, no gaps */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .content,
+  .content-demo {
+    padding: 1rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Remove container gaps */
+  .container,
+  .container-fluid {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .card,
+  .section-card,
+  .stats-card {
+    padding: var(--card-padding-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  .page-header .page-title {
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+  }
+
+  .table-wrapper table {
+    min-width: 580px;
+  }
+
+  .table-actions,
+  .header-actions,
+  .filter-actions,
+  .action-toolbar,
+  .btn-group {
+    width: 100%;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .profile-header,
+  .profile-details,
+  .timeline-wrapper,
+  .information-grid,
+  .two-column-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .avatar-lg {
+    width: 68px;
+    height: 68px;
+  }
+
+  .badge,
+  .status-pill {
+    font-size: 0.85rem;
+  }
+}
+
+/* ==========================================================================
+   SMALL PHONES (≤ 600px)
+   ========================================================================== */
+@media (max-width: 600px) {
+  :root {
+    --layout-gap-lg: 1.25rem;
+    --layout-gap-md: 1rem;
+    --card-padding-lg: 1.25rem;
+  }
+  
+  /* Ensure no gaps on small screens */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .content,
+  .content-demo {
+    padding: 0.9rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Remove container gaps */
+  .container,
+  .container-fluid {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .cards-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-wrapper {
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+  }
+
+  .table-wrapper table {
+    min-width: 520px;
+  }
+
+  .tab-nav,
+  .segment-control,
+  .filters-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem auto;
+  }
+  
+  /* Ensure modals are centered on mobile */
+  .modal-dialog.modal-dialog-centered {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+  }
+
+  .toast,
+  .alert {
+    width: calc(100% - 1.5rem);
+    margin: 0.75rem;
+  }
+}
+
+/* ==========================================================================
+   EXTRA SMALL (≤ 420px)
+   ========================================================================== */
+@media (max-width: 420px) {
+  /* Ensure no gaps on extra small screens */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .content,
+  .content-demo {
+    padding: 0.75rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Remove container gaps completely */
+  .container,
+  .container-fluid {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .page-header .page-title {
+    font-size: 1.2rem;
+  }
+
+  .table-wrapper table {
+    min-width: 460px;
+  }
+
+  .card,
+  .stats-card {
+    padding: 1rem;
+  }
+
+  .btn,
+  .btn-sm,
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .badge,
+  .status-pill {
+    font-size: 0.8rem;
+  }
+}
+

@@ -113,8 +113,10 @@ function loadPatientDetail(patientId) {
         // Update detail header
         document.getElementById('detailInitials').textContent = getInitials(patient.full_name);
         document.getElementById('detailName').textContent = patient.full_name;
-        document.getElementById('detailSRCode').textContent = 'SR-Code: ' + patient.sr_code;
-        document.getElementById('detailPosition').textContent = patient.position;
+        const srCode = patient.sr_code && patient.sr_code !== 'null' ? patient.sr_code : 'N/A';
+        document.getElementById('detailSRCode').textContent = 'SR-Code: ' + srCode;
+        const positionLabel = patient.position || patient.program || 'Student';
+        document.getElementById('detailPosition').textContent = positionLabel;
 
         // Load personal information
         loadPersonalInfo(patient);
@@ -146,97 +148,98 @@ function loadPersonalInfo(patient) {
         }
         
         const age = calculateAge(patient.date_of_birth);
+        const ageDisplay = patient.age || age || 'N/A';
+        const phoneNumber = patient.phone || patient.contact_number || 'N/A';
+        const guardianName = patient.guardian_name || patient.emergency_contact_name || 'N/A';
+        const guardianRelationship = patient.guardian_relationship || patient.emergency_contact_relationship || 'N/A';
+        const guardianPhone = patient.guardian_contact || patient.emergency_contact_phone || 'N/A';
+        const gender = patient.sex || patient.gender || 'N/A';
+        const firstName = patient.fname || '';
+        const middleName = patient.mname || '';
+        const lastName = patient.lname || '';
         
         infoTab.innerHTML = `
-            <form id="updatePatientForm">
-                <div class="form-section">
-                    <h4 class="section-title">Personal Information</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" class="form-control" value="${patient.full_name || ''}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>SR-Code</label>
-                            <input type="text" class="form-control" value="${patient.sr_code || ''}" readonly>
-                        </div>
+            <div class="form-section">
+                <h4 class="section-title">Personal Information</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>First Name</label>
+                        <p>${firstName || 'N/A'}</p>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Position</label>
-                            <input type="text" class="form-control" value="${patient.position || ''}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Date of Birth</label>
-                            <input type="text" class="form-control" value="${formatDate(patient.date_of_birth)}" readonly>
-                        </div>
+                    <div class="info-item">
+                        <label>Middle Name</label>
+                        <p>${middleName || 'N/A'}</p>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Age</label>
-                            <input type="text" class="form-control" value="${age} years old" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Gender</label>
-                            <input type="text" class="form-control" value="${patient.gender || ''}" readonly>
-                        </div>
+                    <div class="info-item">
+                        <label>Last Name</label>
+                        <p>${lastName || 'N/A'}</p>
                     </div>
-                </div>
-
-                <div class="form-section">
-                    <h4 class="section-title">Contact Information</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" class="form-control" value="${patient.email || ''}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" class="form-control" value="${patient.phone || ''}" readonly>
-                        </div>
+                    <div class="info-item">
+                        <label>Date of Birth</label>
+                        <p>${patient.date_of_birth ? formatDate(patient.date_of_birth) : 'N/A'}</p>
                     </div>
-                    <div class="form-group full-width">
+                    <div class="info-item">
+                        <label>Age</label>
+                        <p>${ageDisplay}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Gender</label>
+                        <p>${gender}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Contact Number</label>
+                        <p>${phoneNumber}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>SR-Code</label>
+                        <p>${patient.sr_code || 'N/A'}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Blood Type</label>
+                        <p>${patient.blood_type || 'N/A'}</p>
+                    </div>
+                    <div class="info-item full-width">
                         <label>Address</label>
-                        <textarea class="form-control" rows="2" readonly>${patient.address || ''}</textarea>
+                        <p>${patient.address || 'N/A'}</p>
+                    </div>
+                    <div class="info-item full-width">
+                        <label>Email Address</label>
+                        <p>${patient.email || 'N/A'}</p>
                     </div>
                 </div>
-
-                <div class="form-section">
-                    <h4 class="section-title">Emergency Contact</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Contact Name</label>
-                            <input type="text" class="form-control" value="${patient.emergency_contact_name || ''}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Relationship</label>
-                            <input type="text" class="form-control" value="${patient.emergency_contact_relationship || ''}" readonly>
-                        </div>
+            </div>
+            
+            <div class="form-section">
+                <h4 class="section-title">Emergency Contact Information</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Guardian Name</label>
+                        <p>${guardianName}</p>
                     </div>
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="tel" class="form-control" value="${patient.emergency_contact_phone || ''}" readonly>
+                    <div class="info-item">
+                        <label>Relationship</label>
+                        <p>${guardianRelationship}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Contact Number</label>
+                        <p>${guardianPhone}</p>
                     </div>
                 </div>
-
-                <div class="form-section">
-                    <h4 class="section-title">Medical Information</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Blood Type</label>
-                            <input type="text" class="form-control" value="${patient.blood_type || 'N/A'}" readonly>
-                        </div>
-                    </div>
-                    <div class="form-group full-width">
+            </div>
+            
+            <div class="form-section">
+                <h4 class="section-title">Medical Information</h4>
+                <div class="info-grid two-columns">
+                    <div class="info-item">
                         <label>Allergies</label>
-                        <textarea class="form-control" rows="2" readonly>${patient.allergies || 'None'}</textarea>
+                        <p>${patient.allergies || 'None'}</p>
                     </div>
-                    <div class="form-group full-width">
+                    <div class="info-item">
                         <label>Medical Conditions</label>
-                        <textarea class="form-control" rows="2" readonly>${patient.medical_conditions || 'None'}</textarea>
+                        <p>${patient.medical_condition || 'None'}</p>
                     </div>
                 </div>
-            </form>
+            </div>
         `;
         
         console.log('Personal info loaded successfully');
@@ -282,6 +285,8 @@ function loadMedicalRecords(patientId) {
                     vitalSigns = vitalSigns.replace(/,\s*$/, ''); // Remove trailing comma
                     
                     // Format medications
+                    // Note: Prescriptions table has been removed - medicines are now in medicine_dispensed table
+                    // This code is kept for backward compatibility but will show empty if prescriptions array is empty
                     let medications = '';
                     if (record.prescriptions && record.prescriptions.length > 0) {
                         medications = record.prescriptions.map(p => 
@@ -387,42 +392,8 @@ function switchTab(tabName) {
         if (tabs[1]) tabs[1].classList.add('active');
         const medicalTab = document.getElementById('medicalTab');
         if (medicalTab) medicalTab.classList.add('active');
-    } else if (tabName === 'new-record') {
-        if (tabs[2]) tabs[2].classList.add('active');
-        const newRecordTab = document.getElementById('newRecordTab');
-        if (newRecordTab) newRecordTab.classList.add('active');
-        
-        // Populate patient information
-        if (currentPatientId) {
-            const patient = patientsData.find(p => p.id == currentPatientId);
-            if (patient) {
-                // Split full name into parts
-                const nameParts = patient.full_name.split(' ');
-                const firstName = nameParts[0] || '';
-                const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
-                const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
-                
-                // Populate patient info fields
-                document.getElementById('patientFirstName').value = firstName;
-                document.getElementById('patientMiddleName').value = middleName;
-                document.getElementById('patientLastName').value = lastName;
-                document.getElementById('patientAge').value = calculateAge(patient.date_of_birth) + ' years old';
-                document.getElementById('patientGender').value = patient.gender;
-                document.getElementById('patientSRCode').value = patient.sr_code;
-            }
-        }
-        
-        // Set current date and time
-        const visitDate = document.getElementById('visitDate');
-        const visitTime = document.getElementById('visitTime');
-        
-        if (visitDate) {
-            visitDate.valueAsDate = new Date();
-        }
-        if (visitTime) {
-            visitTime.value = new Date().toTimeString().slice(0, 5);
-        }
     }
+    // Removed the 'new-record' tab handling
 }
 
 // Filter patients

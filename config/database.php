@@ -1,5 +1,4 @@
 <?php
-// Database Configuration - Matches your existing db.php
 $host = 'localhost';
 $dbname = 'clinic_db';
 $username = 'root';
@@ -20,13 +19,11 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
-// Helper function to get database connection
 function getDB() {
     global $pdo;
     return $pdo;
 }
 
-// Sanitize input
 function sanitizeInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -34,7 +31,6 @@ function sanitizeInput($data) {
     return $data;
 }
 
-// Check if user is logged in
 function checkAuth() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -46,7 +42,6 @@ function checkAuth() {
     return $_SESSION['user_id'];
 }
 
-// Check if user is admin or doctor
 function checkAdminOrDoctor() {
     session_start();
     if (!isset($_SESSION['user_id'])) {

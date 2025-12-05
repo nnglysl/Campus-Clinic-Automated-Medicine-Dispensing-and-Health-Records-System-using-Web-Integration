@@ -1,41 +1,26 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
     
-    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    
-    .top-bar {
-      background: white;
-      padding: 20px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    .main-content { 
+      flex: 1; 
+      padding: 30px;
+      background-color: #fafafa;
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
     }
     
-    .top-bar h2 { margin: 0; font-size: 1.5rem; color: #333; }
-    
-    .search-bar {
-      display: flex;
-      align-items: center;
-      background: #f5f5f5;
-      padding: 8px 15px;
-      border-radius: 20px;
-      width: 300px;
+    .page-title {
+      font-size: 32px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 20px;
     }
     
-    .search-bar input {
-      border: none;
-      background: none;
-      outline: none;
-      flex: 1;
-      margin-left: 10px;
-    }
-    
-    .content-area { flex: 1; display: flex; overflow: hidden; }
+    .content-area { flex: 1; display: flex; overflow: hidden; gap: 30px; }
     
     .calendar-section {
       flex: 1;
-      padding: 30px;
       overflow-y: auto;
     }
     
@@ -330,3 +315,6 @@
     
     .btn-cancel { background: #f44336; color: white; }
     .btn-cancel:hover { background: #d32f2f; }
+    
+    .btn-fill-form { background: #8B0000; color: white; }
+    .btn-fill-form:hover { background: #A52A2A; }

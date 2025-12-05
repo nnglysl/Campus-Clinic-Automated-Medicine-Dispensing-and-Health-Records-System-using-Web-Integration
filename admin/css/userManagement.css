@@ -23,6 +23,31 @@ body {
   color: #333;
 }
 
+/* Add New Employee Button */
+.page-header .btn-primary {
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.page-header .btn-primary:hover {
+  background: linear-gradient(135deg, #8b1a00 0%, #a52a00 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 13, 0, 0.3);
+}
+
+.page-header .btn-primary:active {
+  transform: translateY(0);
+}
+
 .user-tabs {
   margin-bottom: 25px;
 }
@@ -279,30 +304,113 @@ body {
 
 /* Schedule Filter Styles */
 .schedule-filters {
-  background: #f8f9fa;
+  background: #f5f5f5;
   padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
+  border-radius: 12px;
   margin-bottom: 20px;
 }
 
 .schedule-filters .form-label {
-  margin-bottom: 5px;
-  font-size: 0.9rem;
-  color: #495057;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #333;
+  display: block;
+}
+
+.schedule-filters .form-label i {
+  display: none;
 }
 
 .schedule-filters .form-select,
 .schedule-filters .form-control {
-  font-size: 0.95rem;
-  border: 1px solid #ced4da;
-  transition: all 0.3s;
+  font-size: 0.9375rem;
+  border: 1px solid #d3d3d3;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #000000;
+  padding: 8px 12px;
+  transition: all 0.2s;
+  width: 100%;
 }
 
 .schedule-filters .form-select:focus,
 .schedule-filters .form-control:focus {
   border-color: #6b0d00;
-  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.15);
+  outline: none;
+}
+
+.schedule-filters .form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+/* Date input with calendar icon */
+.schedule-filters input[type="date"] {
+  position: relative;
+  padding-right: 35px;
+}
+
+.schedule-filters input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0.5;
+  width: 18px;
+  height: 18px;
+}
+
+.schedule-filters input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
+
+/* Search Employee input */
+.schedule-filters #scheduleSearch {
+  width: 100%;
+}
+
+.schedule-filters #scheduleSearch::placeholder {
+  color: #999;
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+/* Search Button */
+.schedule-filters .btn-primary {
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.schedule-filters .btn-primary:hover {
+  background: linear-gradient(135deg, #8b1a00 0%, #a52a00 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 13, 0, 0.3);
+}
+
+.schedule-filters .btn-primary:active {
+  transform: translateY(0);
+}
+
+.schedule-filters .btn-primary i {
+  font-size: 1rem;
 }
 
 /* Date Group Header Styles */
@@ -358,6 +466,9 @@ body {
   font-size: 0.9rem;
   padding: 8px 15px;
   font-weight: 600;
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%) !important;
+  border: none;
+  color: white;
 }
 
 /* Responsive Schedule Display */
@@ -395,11 +506,13 @@ body {
     gap: 15px;
   }
   
-  .schedule-filters .col-md-3,
-  .schedule-filters .col-md-4,
-  .schedule-filters .col-md-2 {
+  .schedule-filters .col-md {
     width: 100%;
     margin-bottom: 10px;
+  }
+  
+  .schedule-filters .btn-primary {
+    width: 100%;
   }
 }
 
@@ -427,11 +540,47 @@ body {
 .btn-primary {
   background-color: #6b0d00;
   border-color: #6b0d00;
+  color: white;
 }
 
 .btn-primary:hover {
   background-color: #8b1a00;
   border-color: #8b1a00;
+  color: white;
+}
+
+/* Modal Footer Buttons - Maroon Theme */
+.modal-footer .btn-primary {
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.modal-footer .btn-primary:hover {
+  background: linear-gradient(135deg, #8b1a00 0%, #a52a00 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 13, 0, 0.3);
+  color: white;
+}
+
+.modal-footer .btn-primary:active {
+  transform: translateY(0);
+  color: white;
+}
+
+.modal-footer .btn-primary:focus {
+  background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 0 0 0.25rem rgba(107, 13, 0, 0.25);
 }
 
 /* DataTables Custom Styling */
@@ -466,6 +615,87 @@ body {
   border-bottom-color: #6b0d00;
   color: #6b0d00;
   background: transparent;
+}
+
+/* Action Buttons - Maroon Theme */
+.btn-group .btn-info {
+  background-color: #6b0d00;
+  border-color: #6b0d00;
+  color: white;
+}
+
+.btn-group .btn-info:hover {
+  background-color: #8b1a00;
+  border-color: #8b1a00;
+  color: white;
+}
+
+.btn-group .btn-info:focus,
+.btn-group .btn-info:active {
+  background-color: #8b1a00;
+  border-color: #8b1a00;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
+}
+
+.btn-group .btn-warning {
+  background-color: #8b4513;
+  border-color: #8b4513;
+  color: white;
+}
+
+.btn-group .btn-warning:hover {
+  background-color: #a0522d;
+  border-color: #a0522d;
+  color: white;
+}
+
+.btn-group .btn-warning:focus,
+.btn-group .btn-warning:active {
+  background-color: #a0522d;
+  border-color: #a0522d;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+}
+
+.btn-group .btn-danger {
+  background-color: #8b0000;
+  border-color: #8b0000;
+  color: white;
+}
+
+.btn-group .btn-danger:hover {
+  background-color: #a52a2a;
+  border-color: #a52a2a;
+  color: white;
+}
+
+.btn-group .btn-danger:focus,
+.btn-group .btn-danger:active {
+  background-color: #a52a2a;
+  border-color: #a52a2a;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+}
+
+.btn-group .btn-success {
+  background-color: #6b0d00;
+  border-color: #6b0d00;
+  color: white;
+}
+
+.btn-group .btn-success:hover {
+  background-color: #8b1a00;
+  border-color: #8b1a00;
+  color: white;
+}
+
+.btn-group .btn-success:focus,
+.btn-group .btn-success:active {
+  background-color: #8b1a00;
+  border-color: #8b1a00;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(107, 13, 0, 0.25);
 }
 
 /* Form Control Enhancements */

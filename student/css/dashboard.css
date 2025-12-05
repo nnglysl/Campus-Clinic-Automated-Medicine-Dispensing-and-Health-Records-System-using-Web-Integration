@@ -14,6 +14,9 @@
       flex: 1;
       padding: 2rem;
       background-color: #f8f9fa;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
     }
 
     /* Stats */
@@ -38,6 +41,36 @@
       color: #555;
       font-weight: 500;
       margin: 5px 0 0;
+    }
+
+    .category-toggle {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .category-btn {
+      border: 1px solid #7e1414;
+      background: #fff;
+      color: #7e1414;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .category-btn:hover {
+      background: #f9e6e6;
+    }
+
+    .category-btn.active {
+      background: #7e1414;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(126, 20, 20, 0.3);
     }
 
     /* Calendar */
@@ -147,6 +180,30 @@
       font-weight: bold;
       border-color: #cc0000;
       color: #800000;
+    }
+
+    .calendar-day.available {
+      background-color: #e8f5e9;
+      border-color: #4caf50;
+      color: #1b5e20;
+    }
+
+    .calendar-day.partially-available {
+      background-color: #fff8e1;
+      border-color: #fbc02d;
+      color: #795548;
+    }
+
+    .calendar-day.fully-booked {
+      background-color: #ffebee;
+      border-color: #f44336;
+      color: #b71c1c;
+    }
+
+    .calendar-day.unavailable {
+      background-color: #f5f5f5;
+      color: #999;
+      cursor: not-allowed;
     }
 
     .calendar-day.has-appointment.today {

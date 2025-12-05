@@ -7,6 +7,10 @@
 
 html, body {
     height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 body {
@@ -14,51 +18,104 @@ body {
     background-color: #f5f5f5;
     display: flex;
     flex-direction: column;
+    margin: 0;
+    padding: 0;
+    width: 100%;
 }
 
 /* ===== HEADER ===== */
+/* Fixed, uniform header styles across all student pages */
 .header {
-    background-color: #6B0D12;
-    color: white;
-    padding: 15px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 80px;
-    position: relative;
+    background-color: #6B0D12 !important;
+    color: white !important;
+    padding: 15px 30px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    height: 80px !important;
+    min-height: 80px !important;
+    max-height: 80px !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: visible !important;
 }
 
 /* Logo + University Name */
 .logo-section {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.logo {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .logo img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+    object-fit: cover !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.university-name {
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .university-name h1 {
-    font-size: 25px;
-    font-weight: 700;
-    line-height: 0.8;
+    font-size: 25px !important;
+    font-weight: 700 !important;
+    line-height: 0.8 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: white !important;
 }
 
 /* ===== RIGHT ICONS ===== */
 .header-icons {
-    position: absolute;
-    top: 15px;
-    right: 30px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    position: absolute !important;
+    top: 15px !important;
+    right: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1001 !important; /* Above overlay (998) and sidebar (999) */
 }
 
 .notification-icon,
-.logout-icon {
+.logout-icon,
+.mobile-menu-icon {
     width: 38px;
     height: 38px;
     display: flex;
@@ -71,49 +128,235 @@ body {
 }
 
 .notification-icon:hover,
-.logout-icon:hover {
+.logout-icon:hover,
+.mobile-menu-icon:hover {
     background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== RESPONSIVE HEADER FIXES ===== */
+/* Ensure header remains consistent across all screen sizes */
+@media (max-width: 991px) {
+    .header {
+        padding: 15px 20px !important;
+        height: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        flex-direction: row !important; /* Keep horizontal layout */
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .logo-section {
+        gap: 15px !important;
+    }
+
+    .logo,
+    .logo img {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+    }
+
+    .university-name h1 {
+        font-size: 25px !important;
+    }
+
+    .header-icons {
+        right: 20px !important;
+        top: 15px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 15px 20px !important;
+        height: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        flex-direction: row !important; /* Keep horizontal layout */
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .logo-section {
+        gap: 15px !important;
+    }
+
+    .logo,
+    .logo img {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+    }
+
+    .university-name h1 {
+        font-size: 22px !important;
+    }
+
+    .header-icons {
+        right: 15px !important;
+        top: 15px !important;
+        gap: 10px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .header {
+        padding: 15px 15px !important;
+        height: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        flex-direction: row !important; /* Keep horizontal layout */
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .logo-section {
+        gap: 12px !important;
+    }
+
+    .logo,
+    .logo img {
+        width: 45px !important;
+        height: 45px !important;
+        min-width: 45px !important;
+        min-height: 45px !important;
+        max-width: 45px !important;
+        max-height: 45px !important;
+    }
+
+    .university-name h1 {
+        font-size: 18px !important;
+    }
+
+    .header-icons {
+        right: 15px !important;
+        top: 15px !important;
+        gap: 8px !important;
+    }
+
+    .notification-icon,
+    .logout-icon,
+    .mobile-menu-icon {
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 18px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .header {
+        padding: 12px 12px !important;
+        height: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .university-name h1 {
+        font-size: 16px !important;
+    }
+
+    .logo,
+    .logo img {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        max-width: 40px !important;
+        max-height: 40px !important;
+    }
 }
 
 
 /* ===== MAIN CONTAINER ===== */
 .main-container {
-    display: flex;
-    flex: 1;
-    height: calc(100vh - 80px);
+    display: flex !important;
+    flex: 1 !important;
+    min-height: calc(100vh - 80px) !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Allow scrolling on mobile/responsive view */
+@media (max-width: 991px) {
+    .main-container {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        min-height: calc(100vh - 80px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-    width: 250px;
-    background-color: #6B0D12; /* BatStateU maroon */
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    height: 100%;
-    padding-top: 0;
+    width: 250px !important;
+    background-color: #6B0D12 !important; /* BatStateU maroon */
+    color: white !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    height: 100% !important;
+    padding-top: 0 !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
 }
 
 /* ===== MENU ITEMS ===== */
 .menu-item {
-    display: block;
-    padding: 15px 25px;
-    font-size: 15px;
-    font-weight: 600;
-    color: white;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
+    display: block !important;
+    padding: 15px 25px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: white !important;
+    text-decoration: none !important;
+    transition: background-color 0.3s ease !important;
 }
 
 .menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .menu-item.active {
-    background-color: #ffffff;
-    color: #000000;
-    font-weight: 700;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
 }
 
 /* ===== DROPDOWN MENU IN SIDEBAR ===== */
@@ -191,24 +434,24 @@ body {
 
 /* ===== USER PROFILE OR LOGOUT AT BOTTOM ===== */
 .user-profile {
-    margin-top: auto; /* push to bottom */
-    padding: 20px 25px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: auto !important; /* push to bottom */
+    padding: 20px 25px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
-    background-color: white;
-    border-radius: 50%;
-    flex-shrink: 0;
+    width: 40px !important;
+    height: 40px !important;
+    background-color: white !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
 }
 
 .user-profile span {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 15px !important;
+    font-weight: 600 !important;
 }
 

@@ -326,10 +326,19 @@ body {
   border-bottom: 2px solid #8b2332;
 }
 
+/* 3-column grid for main personal info */
 .info-grid {
   display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* 2-column grid for address/email and medical info */
+.info-grid-2 {
+  display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 15px;
   margin-top: 20px;
 }
 
@@ -580,6 +589,114 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Document Header Style (matching official form format) */
+.document-header {
+  background: white;
+  border: 2px solid #8b2332;
+  border-radius: 8px 8px 0 0;
+  padding: 20px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border-bottom: 3px solid #8b2332;
+}
+
+.document-header .header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.header-logo {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  background: #f8f9fa;
+}
+
+.header-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: auto;
+  display: block;
+  background: transparent;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.header-info-boxes {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #8b2332;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: white;
+}
+
+.info-box label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b2332;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.info-box span {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.header-title {
+  width: 100%;
+  text-align: center;
+  padding-top: 10px;
+  border-top: 2px solid #8b2332;
+  margin-top: 5px;
+}
+
+.header-title h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #8b2332;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+
+/* Legacy header style (for backward compatibility) */
 .consultation-form-header {
   background: linear-gradient(135deg, #8b2332 0%, #6d1b27 100%);
   color: white;
@@ -794,4 +911,190 @@ body {
   .consultation-form-container {
     box-shadow: none;
   }
+}
+
+/* Treatment Plan Styles */
+.medicine-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: flex-end;
+}
+
+.btn-add-medicine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: white;
+  border: 2px dashed #8b2332;
+  color: #8b2332;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+  width: auto;
+}
+
+.btn-add-medicine:hover {
+  background-color: #8b2332;
+  color: white;
+  border-style: solid;
+}
+
+.btn-add-medicine i {
+  font-size: 16px;
+}
+
+.btn-icon {
+  padding: 8px 12px;
+  background-color: #dc3545;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  background-color: #bb2d3b;
+  transform: scale(1.05);
+}
+
+.btn-remove-medicine {
+  background-color: #dc3545;
+}
+
+.medicine-select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Medicine Autocomplete Styles */
+.medicine-search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.medicine-search-input:focus {
+  outline: none;
+  border-color: #8b2332;
+  box-shadow: 0 0 0 3px rgba(139, 35, 50, 0.1);
+}
+
+.medicine-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+.medicine-suggestion-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.15s ease;
+}
+
+.medicine-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.medicine-suggestion-item:hover,
+.medicine-suggestion-item.highlighted {
+  background-color: #f8f9fa;
+}
+
+.medicine-suggestion-name {
+  font-weight: 600;
+  color: #212529;
+  font-size: 14px;
+  margin-bottom: 3px;
+  line-height: 1.4;
+}
+
+.medicine-suggestion-code {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 2px;
+  line-height: 1.4;
+}
+
+.medicine-suggestion-stock {
+  font-size: 12px;
+  color: #28a745;
+  font-weight: 500;
+  margin-bottom: 2px;
+  line-height: 1.4;
+}
+
+.medicine-suggestion-expiry {
+  font-size: 12px;
+  color: #ff6b00;
+  font-weight: 600;
+  margin-top: 4px;
+  line-height: 1.4;
+  background-color: #fff3e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ff9800;
+}
+
+.medicine-suggestion-expired {
+  font-size: 12px;
+  color: #dc3545;
+  font-weight: 600;
+  margin-top: 4px;
+  line-height: 1.4;
+  background-color: #ffebee;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+}
+
+.medicine-suggestion-expiry-normal {
+  font-size: 11px;
+  color: #6c757d;
+  font-weight: 400;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.medicine-suggestion-item.nearing-expiry-item {
+  border-left: 3px solid #ff9800;
+  background-color: #fffbf0;
+}
+
+.medicine-suggestion-item.expired-item {
+  border-left: 3px solid #dc3545;
+  background-color: #fff5f5;
+  opacity: 0.7;
+}
+
+.medicine-suggestion-empty {
+  padding: 15px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+#medicinesContainer {
+  margin-bottom: 15px;
 }

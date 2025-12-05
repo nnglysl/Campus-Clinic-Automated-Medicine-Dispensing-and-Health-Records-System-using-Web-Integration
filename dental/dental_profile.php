@@ -14,9 +14,9 @@ if (!isset($_SESSION['user_id'])) {
 
 // ✅ Define user info safely
 $user_id = $_SESSION['user_id'];
-$first_name = $_SESSION['fname'] ?? 'Admin';
+$first_name = $_SESSION['fname'] ?? 'Dentist';
 $last_name = $_SESSION['lname'] ?? '';
-$user_role = $_SESSION['role'] ?? 'admin';
+$user_role = $_SESSION['role'] ?? 'dentist';
 $fullName = trim($first_name . ' ' . $last_name);
 
 // Log session info for debugging
@@ -57,7 +57,7 @@ try {
         $user['position'] = $employee['role'] ?? ucfirst($user['role'] ?? 'Staff');
         $user['employee_id'] = $employee['id'] ?? 'N/A';
         $user['hire_date'] = $employee['created_at'] ?? null;
-        $user['employee_username'] = $employee['username'] ?? $user['email'];
+        // Username removed - not used in system
         
         // Use employee data as primary if available
         if (empty($user['phone']) && !empty($employee['phone'])) {
@@ -123,6 +123,8 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="../css/nav.css">
     <link rel="stylesheet" href="../dental/css/dental_profile.css">
+    <link rel="stylesheet" href="../dental/css/responsive.css" />
+    <link rel="stylesheet" href="../admin/css/notifications.css" />
 </head>
 <body>
    <!-- HEADER -->
@@ -138,7 +140,11 @@ try {
     </div>
 
     <div class="header-icons">
-      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <!-- Mobile Menu Icon -->
+      <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <i class="bi bi-list"></i>
+      </button>
+      <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
@@ -151,10 +157,9 @@ try {
       <a href="../dental/dental_profile.php" class="menu-item active">Profile</a>
       <a href="../dental/dental_patients.php" class="menu-item ">Patients</a>
       <a href="../dental/dental_appointments.php" class="menu-item">Appointments</a>
-      <a href="../dental/settings.php" class="menu-item">Settings</a>
+      <a href="../dental/dental_settings.php" class="menu-item">Settings</a>
       
       <div class="user-profile">
-        <div class="avatar"></div>
         <span><?php echo htmlspecialchars($fullName); ?></span>
       </div>
     </div>
@@ -426,7 +431,7 @@ try {
         <div class="section-title">Schedule Timeline</div>
         <div class="timeline">
           <div class="timeline-header">
-            <span>🕗 8:00 AM — 6:00 PM</span>
+            <span>🕗 8:00 AM — 5:00 PM</span>
           </div>
           <div class="timeline-slots" id="timelineSlots"></div>
         </div>
@@ -442,8 +447,10 @@ try {
     </div>
   </div>
 
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../js/logout.js"></script> 
+  <script src="../js/logout.js"></script>
+  <script src="js/notifications.js"></script> 
   <script>
     // User data from PHP
     const userData = {
@@ -734,7 +741,14 @@ try {
     let isDragging = false;
     let dragMode = null;
 
-    const hours = Array.from({length: 11}, (_, i) => i + 8);
+    // Time slots in 30-minute intervals from 8:00 AM to 5:00 PM
+    const hours = [];
+    for (let hour = 8; hour <= 17; hour++) {
+      hours.push(hour + 0.0); // :00
+      if (hour < 17) {
+        hours.push(hour + 0.5); // :30
+      }
+    }
 
     function initCalendar() {
       renderCalendar();
@@ -1088,7 +1102,7 @@ try {
       statusText.textContent = newStatus === 'neutral' ? 'Not Set' : newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
       
       const dateKey = formatDate(selectedDate);
-      const hour = parseInt(slot.dataset.hour);
+      const hour = parseFloat(slot.dataset.hour);
       
       if (!schedules[dateKey]) schedules[dateKey] = { slots: {} };
       if (!schedules[dateKey].slots) schedules[dateKey].slots = {};
@@ -1122,7 +1136,8 @@ try {
     if (daySchedule.wholeDay) {
       payload.scheduleType = 'available';
       payload.startTime = '08:00';
-      payload.endTime = '18:00';
+      // Store end time as 17:30 to allow slot at 17:00 (5:00 PM) for 30-minute appointments
+      payload.endTime = '17:30';
     } else if (daySchedule.unavailableDay) {
       payload.scheduleType = 'unavailable';
       payload.reason = document.getElementById('reasonInput').value;
@@ -1183,16 +1198,19 @@ try {
           schedules[dateKey] = { unavailableDay: true };
         } else if (schedule.schedule_type === 'available' && 
                    schedule.start_time === '08:00:00' && 
-                   schedule.end_time === '18:00:00') {
+                   schedule.end_time === '17:00:00') {
           // Whole day available
           schedules[dateKey] = { wholeDay: true };
         } else {
-          // Custom time slots
-          const startHour = parseInt(schedule.start_time.split(':')[0]);
-          const endHour = parseInt(schedule.end_time.split(':')[0]);
+          // Custom time slots with 30-minute intervals
+          const startParts = schedule.start_time.split(':');
+          const endParts = schedule.end_time.split(':');
+          const startHour = parseInt(startParts[0]) + (parseInt(startParts[1]) / 60);
+          const endHour = parseInt(endParts[0]) + (parseInt(endParts[1]) / 60);
           
-          for (let hour = startHour; hour < endHour; hour++) {
-            schedules[dateKey].slots[hour] = schedule.schedule_type;
+          // Generate 30-minute intervals
+          for (let slot = startHour; slot < endHour; slot += 0.5) {
+            schedules[dateKey].slots[slot] = schedule.schedule_type;
           }
         }
       });
@@ -1213,9 +1231,12 @@ try {
 }
 
     function formatHour(hour) {
-      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      return `${displayHour}:00 ${ampm}`;
+      const isHalfHour = hour % 1 === 0.5;
+      const hourInt = Math.floor(hour);
+      const displayHour = hourInt > 12 ? hourInt - 12 : hourInt === 0 ? 12 : hourInt;
+      const ampm = hourInt >= 12 ? 'PM' : 'AM';
+      const minutes = isHalfHour ? '30' : '00';
+      return `${displayHour}:${minutes} ${ampm}`;
     }
 
     function isToday_helper(date) {
@@ -1233,6 +1254,12 @@ try {
         }
       }, 100);
     });
+    
+    // Initialize notification system
+    if (window.DentalNotificationSystem) {
+      DentalNotificationSystem.init();
+    }
   </script>
+  <script src="../js/mobile-menu.js"></script>
 </body>
 </html>

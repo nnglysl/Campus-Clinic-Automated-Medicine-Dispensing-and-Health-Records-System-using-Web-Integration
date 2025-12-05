@@ -77,16 +77,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_appointment'])) 
         
         $appointmentId = $pdo->lastInsertId();
         
+        // Log appointment creation
+        try {
+            require_once(__DIR__ . '/../includes/appointment_logger.php');
+            $appointmentData = [
+                'appointment_date' => $appointmentDate,
+                'appointment_time' => $appointmentTime,
+                'appointment_type' => $appointmentType,
+                'fname' => $user['fname'],
+                'lname' => $user['lname']
+            ];
+            logAppointmentCreated($pdo, $appointmentId, $user['id'], $appointmentData);
+        } catch (Exception $e) {
+            error_log("Failed to log appointment creation: " . $e->getMessage());
+            // Continue even if logging fails
+        }
+        
+        // Create notification for medical/dental staff
+        try {
+            $patientName = trim($user['fname'] . ' ' . $user['lname']);
+            $appointmentDateFormatted = date('F j, Y', strtotime($appointmentDate));
+            $appointmentTimeFormatted = date('g:i A', strtotime($appointmentTime));
+            
+            $message = "New {$appointmentType} appointment booked by {$patientName} on {$appointmentDateFormatted} at {$appointmentTimeFormatted}";
+            
+            $data = json_encode([
+                'appointment_id' => $appointmentId,
+                'appointment_type' => $appointmentType,
+                'patient_name' => $patientName,
+                'appointment_date' => $appointmentDate,
+                'appointment_time' => $appointmentTime,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            
+            $stmt = $pdo->prepare("
+                INSERT INTO notifications (type, message, data, status, created_at) 
+                VALUES ('appointment_booked', ?, ?, 'unread', NOW())
+            ");
+            $stmt->execute([$message, $data]);
+        } catch (Exception $e) {
+            error_log("Failed to create notification: " . $e->getMessage());
+        }
+        
         // Try to sync to Google Calendar (optional, won't fail if it doesn't work)
         $calendarSynced = false;
         try {
-            require_once(__DIR__ . '/appointment_handler.php');
-            $syncResult = createCalendarEvent($pdo, $appointmentId);
-            if ($syncResult['success']) {
-                $calendarSynced = true;
+            require_once(__DIR__ . '/../api/calendar_api.php');
+            
+            // Get appointment details for calendar sync
+            $stmt = $pdo->prepare("
+                SELECT 
+                    a.*,
+                    u.fname,
+                    u.lname
+                FROM appointments a
+                JOIN users u ON a.patient_id = u.id
+                WHERE a.id = ?
+            ");
+            $stmt->execute([$appointmentId]);
+            $appointment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($appointment) {
+                $appointmentData = [
+                    'appointment_id' => $appointmentId,
+                    'date' => $appointment['appointment_date'],
+                    'time' => $appointment['appointment_time'],
+                    'type' => $appointment['appointment_type'],
+                    'name' => trim(($appointment['fname'] ?? '') . ' ' . ($appointment['lname'] ?? '')),
+                    'patient_id' => $appointment['patient_id'],
+                    'notes' => $appointment['notes'] ?? ''
+                ];
+                
+                $syncResult = createCalendarEvent($appointmentData);
+                if ($syncResult['success']) {
+                    $calendarSynced = true;
+                    error_log("Appointment {$appointmentId} synced to Google Calendar successfully");
+                } else {
+                    error_log("Failed to sync appointment {$appointmentId} to Google Calendar: " . ($syncResult['error'] ?? 'Unknown error'));
+                }
             }
         } catch (Exception $e) {
-            error_log("Calendar sync failed: " . $e->getMessage());
+            error_log("Calendar sync failed for appointment {$appointmentId}: " . $e->getMessage());
         }
         
         echo json_encode([
@@ -587,7 +658,7 @@ try {
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Confirm Booking</button>
+            <button type="submit" class="btn btn-primary">Confirm</button>
           </div>
         </form>
       </div>

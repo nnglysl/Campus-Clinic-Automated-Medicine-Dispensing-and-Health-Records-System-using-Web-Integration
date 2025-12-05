@@ -64,6 +64,8 @@ function getPatient($pdo) {
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($patient) {
+        // Remove civil_status from patient data as it's not used in patient records
+        unset($patient['civil_status']);
         echo json_encode(['success' => true, 'patient' => $patient]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Patient not found']);
@@ -134,7 +136,7 @@ function addPatient($pdo) {
     }
 }
 
-// Get patient medical records
+// Get patient medical records - Unified function combining all record types
 function getMedicalRecords($pdo) {
     $patientId = intval($_GET['patient_id'] ?? 0);
     
@@ -143,39 +145,170 @@ function getMedicalRecords($pdo) {
         return;
     }
     
-    // FIXED: Join with employees table instead of users table
-    // since medical_records.employee_id references employees table
+    $records = [];
+    
+    // 1. Get Medical Records from medical_records table
+    try {
     $stmt = $pdo->prepare("
         SELECT 
             mr.*,
-            COALESCE(e.first_name, u.fname) as fname,
-            COALESCE(e.last_name, u.lname) as lname
+                COALESCE(ue.fname, e.first_name, u.fname) as fname,
+                COALESCE(ue.lname, e.last_name, u.lname) as lname,
+                'medical_records' as source_table,
+                'Medical Record' as record_type
         FROM medical_records mr 
         LEFT JOIN employees e ON mr.employee_id = e.id 
+            LEFT JOIN users ue ON e.user_id = ue.id
         LEFT JOIN users u ON mr.employee_id = u.id
         WHERE mr.patient_id = ? 
         ORDER BY mr.visit_date DESC, mr.visit_time DESC
     ");
     $stmt->execute([$patientId]);
-    $records = [];
     
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // Get prescriptions for this record
-        $prescStmt = $pdo->prepare("
-            SELECT p.*, i.name as medicine_name, i.batchId as batch_id 
-            FROM prescriptions p 
-            JOIN inventory i ON p.inventory_id = i.id 
-            WHERE p.medical_record_id = ?
-        ");
-        $prescStmt->execute([$row['id']]);
-        $prescriptions = $prescStmt->fetchAll(PDO::FETCH_ASSOC);
+        // Medicines are now stored in medicine_dispensed table, not prescriptions
+        // Prescriptions table has been removed - set empty array for backward compatibility
+        $prescriptions = [];
         
         // Build physician name
         $physicianName = 'Dr. ' . ($row['fname'] ?? 'Unknown') . ' ' . ($row['lname'] ?? '');
         $row['physician_name'] = $physicianName;
         $row['prescriptions'] = $prescriptions;
+            $row['record_id'] = $row['id'];
+            $records[] = $row;
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching medical_records: " . $e->getMessage());
+    }
+    
+    // 2. Get Dental Records from dental_records table
+    try {
+        $tableCheck = $pdo->query("SHOW TABLES LIKE 'dental_records'");
+        if ($tableCheck->rowCount() > 0) {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    dr.*,
+                    dr.id as dental_record_id,
+                    CONCAT(u.fname, ' ', u.lname) as physician_name,
+                    dr.created_at as visit_date,
+                    NULL as visit_time,
+                    'Dental Examination' as chief_complaint,
+                    CASE 
+                        WHEN dr.gingivitis = 1 THEN 'Gingivitis'
+                        WHEN dr.early_periodontitis = 1 THEN 'Early Periodontitis'
+                        WHEN dr.class_molar = 1 THEN 'Class Molar'
+                        WHEN dr.overjet = 1 THEN 'Overjet'
+                        WHEN dr.overbite = 1 THEN 'Overbite'
+                        WHEN dr.orthodontic = 1 THEN 'Orthodontic'
+                        WHEN dr.stayplate = 1 THEN 'Stayplate'
+                        WHEN dr.clenching = 1 THEN 'Clenching'
+                        WHEN dr.clicking = 1 THEN 'Clicking'
+                        ELSE 'Dental Examination'
+                    END as diagnosis,
+                    dr.remarks as treatment_instructions,
+                    dr.treatments,
+                    dr.tooth_status,
+                    'dental_records' as source_table,
+                    'Dental Record' as record_type,
+                    dr.id as record_id
+                FROM dental_records dr
+                LEFT JOIN users u ON dr.dentist_id = u.id
+                WHERE dr.patient_id = ?
+                ORDER BY dr.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                // Parse JSON fields if they exist
+                if (!empty($row['tooth_status'])) {
+                    $row['tooth_status'] = json_decode($row['tooth_status'], true) ?? [];
+                } else {
+                    $row['tooth_status'] = [];
+                }
+                
+                if (!empty($row['treatments'])) {
+                    $row['treatments'] = json_decode($row['treatments'], true) ?? [];
+                } else {
+                    $row['treatments'] = [];
+                }
+                
+                $row['prescriptions'] = []; // Dental records don't have prescriptions
+                $records[] = $row;
+            }
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching dental_records: " . $e->getMessage());
+    }
+    
+    // 3. Get Medical Consultations from medical_consultations table
+    try {
+        $tableCheck = $pdo->query("SHOW TABLES LIKE 'medical_consultations'");
+        if ($tableCheck->rowCount() > 0) {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    mc.id,
+                    mc.patient_id,
+                    mc.physician_id,
+                    mc.assessment_date,
+                    mc.control_number,
+                    mc.age,
+                    mc.sex,
+                    mc.purpose,
+                    mc.blood_pressure,
+                    mc.pulse_rate,
+                    mc.spo2,
+                    mc.respiratory_rate,
+                    mc.temperature,
+                    mc.height,
+                    mc.weight,
+                    mc.bmi,
+                    mc.last_menstrual_period,
+                    mc.vision_right,
+                    mc.vision_left,
+                    mc.nurse_notes,
+                    mc.doctor_date,
+                    mc.doctor_notes,
+                    mc.created_at,
+                    mc.updated_at,
+                    mc.assessment_date as visit_date,
+                    NULL as visit_time,
+                    mc.purpose as chief_complaint,
+                    COALESCE(mc.doctor_notes, mc.nurse_notes, 'Consultation completed') as diagnosis,
+                    TRIM(CONCAT(COALESCE(mc.nurse_notes, ''), ' ', COALESCE(mc.doctor_notes, ''))) as clinical_notes,
+                    COALESCE(mc.doctor_notes, mc.nurse_notes, '') as treatment_instructions,
+                    COALESCE(mc.physician_name, CONCAT(u.fname, ' ', u.lname), 'Unknown') as physician_name,
+                    'medical_consultations' as source_table,
+                    'Medical Consultation' as record_type,
+                    mc.id as record_id
+                FROM medical_consultations mc
+                LEFT JOIN users u ON mc.physician_id = u.id
+                WHERE mc.patient_id = ?
+                ORDER BY mc.assessment_date DESC, mc.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $row['prescriptions'] = []; // Consultations don't have prescriptions
         $records[] = $row;
     }
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching medical_consultations: " . $e->getMessage());
+    }
+    
+    // Sort all records by date (most recent first)
+    usort($records, function($a, $b) {
+        $dateA = strtotime($a['visit_date'] ?? $a['assessment_date'] ?? $a['created_at'] ?? '1970-01-01');
+        $dateB = strtotime($b['visit_date'] ?? $b['assessment_date'] ?? $b['created_at'] ?? '1970-01-01');
+        
+        if ($dateA == $dateB) {
+            $timeA = strtotime($a['visit_time'] ?? '00:00:00');
+            $timeB = strtotime($b['visit_time'] ?? '00:00:00');
+            return $timeB <=> $timeA; // Descending time
+        }
+        
+        return $dateB <=> $dateA; // Descending date
+    });
     
     echo json_encode(['success' => true, 'records' => $records]);
 }
@@ -257,12 +390,9 @@ function addMedicalRecord($pdo, $user) {
                 throw new Exception("Insufficient medicine stock. Available: " . $available);
             }
             
-            // Insert prescription
-            $prescStmt = $pdo->prepare("
-                INSERT INTO prescriptions (medical_record_id, inventory_id, quantity, dosage_instructions) 
-                VALUES (?, ?, ?, ?)
-            ");
-            $prescStmt->execute([$medicalRecordId, $inventoryId, $quantity, $dosage]);
+            // Note: Prescriptions table removed - medicines are now stored in medicine_dispensed table
+            // This code is kept for backward compatibility but no longer inserts to prescriptions
+            // Medicines should be saved via save_consultation.php which uses medicine_dispensed table
             
             // Update medicine inventory - only update dispensed count
             $updateStmt = $pdo->prepare("

@@ -427,6 +427,9 @@
     .legend-dot.unavailable {
       background: #f44336;
     }
+.legend-dot.custom {
+  background: #ffc107;
+}
 
     .info-banner {
       background: #e3f2fd;
@@ -495,12 +498,22 @@
     .day-cell.today {
       background: #fff3e0;
     }
+.day-cell.partial {
+  background: #fffbea;
+  border: 1px solid #ffe9a8;
+}
 
     .day-number {
       font-size: 14px;
       font-weight: 500;
       margin-bottom: 4px;
     }
+
+.day-status {
+  font-size: 0.75rem;
+  color: #555;
+  font-weight: 500;
+}
 
     .day-schedules {
       display: flex;
@@ -875,3 +888,197 @@
         right: -100%;
       }
     }
+
+/* ===== SCHEDULE BUILDER ===== */
+.schedule-section .card {
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 34, 58, 0.06);
+  height: 100%;
+}
+
+.schedule-card .legend {
+  margin-bottom: 1rem;
+}
+
+.schedule-card .calendar-grid {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.schedule-card .days-grid {
+  padding: 10px;
+}
+
+.schedule-card .day-cell {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  margin: 4px;
+  min-height: 80px;
+  padding: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.schedule-card .day-cell.available {
+  background: #e9f7ef;
+  border-color: #cfe8dd;
+}
+
+.schedule-card .day-cell.unavailable {
+  background: #fde8e8;
+  border-color: #f5c2c7;
+}
+
+.schedule-card .day-cell.selected {
+  box-shadow: 0 8px 20px rgba(148, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.selected-summary {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f8f9fb;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.selected-summary .label {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #888;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.schedule-entries {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.schedule-entry {
+  border: 1px solid #e7eaef;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.schedule-entry.available {
+  border-left: 4px solid #198754;
+}
+
+.schedule-entry.unavailable {
+  border-left: 4px solid #dc3545;
+}
+
+.schedule-entry-time {
+  font-weight: 600;
+  color: #333;
+}
+
+.schedule-form-card .schedule-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.schedule-badge {
+  background: #fff1f0;
+  color: #a30d0d;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-toggle .btn {
+  font-weight: 500;
+  color: #444;
+}
+
+.type-toggle .btn.active,
+.type-toggle .btn:focus,
+.type-toggle .btn-check:checked + .btn-outline-secondary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.schedule-type-fields {
+  border: 1px solid #e6e8ec;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fafafa;
+  margin-top: 0.75rem;
+}
+
+.custom-range-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
+}
+
+.custom-range-row .form-label {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.custom-range-row .btn {
+  border-radius: 8px;
+}
+
+.upcoming-list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.upcoming-item {
+  border: 1px solid #e7eaef;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.upcoming-item .badge {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: none;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.upcoming-item.unavailable .badge {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.upcoming-item.custom .badge {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+@media (max-width: 992px) {
+  .custom-range-row {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-summary {
+    flex-direction: column;
+  }
+}

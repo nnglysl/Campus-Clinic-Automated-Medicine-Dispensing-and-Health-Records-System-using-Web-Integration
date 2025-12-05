@@ -605,3 +605,10 @@ window.bookAppointmentForm = function(event) {
     
     window.appointmentSync.bookAppointment(appointmentData);
 };
+
+// Refresh realtime calendar when doctors update their schedules
+window.addEventListener('scheduleUpdated', () => {
+    if (window.appointmentSync) {
+        window.appointmentSync.loadCalendar(false);
+    }
+});

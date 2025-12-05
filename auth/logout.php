@@ -1,18 +1,21 @@
 <?php
 session_start();
+require_once '../config/database.php';
+require_once '../includes/activity_logger.php';
 
-// Clear all session variables
+if (isset($_SESSION['user_id'])) {
+    $pdo = getDB();
+    logActivity($pdo, $_SESSION['user_id'], 'Logout', 'User logged out');
+}
+
 $_SESSION = array();
 
-// Destroy the session cookie
 if (isset($_COOKIE[session_name()])) {
     setcookie(session_name(), '', time()-3600, '/');
 }
 
-// Destroy the session
 session_destroy();
 
-// Redirect to login page
 header("Location: login.php");
 exit();
 ?>

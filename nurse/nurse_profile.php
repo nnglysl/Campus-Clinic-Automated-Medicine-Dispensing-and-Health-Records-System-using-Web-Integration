@@ -44,7 +44,7 @@ try {
         $user['position'] = $employee['role'] ?? ucfirst($user['role'] ?? 'Staff');
         $user['employee_id'] = $employee['id'] ?? 'N/A';
         $user['hire_date'] = $employee['created_at'] ?? null;
-        $user['employee_username'] = $employee['username'] ?? $user['email'];
+        // Username removed - not used in system
         
         // Use employee data as primary if available
         if (empty($user['phone']) && !empty($employee['phone'])) {
@@ -107,9 +107,11 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../admin/css/notifications.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="../css/nav.css">
     <link rel="stylesheet" href="../nurse/css/nurse_profile.css">
+    <link rel="stylesheet" href="../nurse/css/responsive.css" />
 </head>
 <body>
    <!-- HEADER -->
@@ -125,7 +127,11 @@ try {
     </div>
 
     <div class="header-icons">
-      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <!-- Mobile Menu Icon -->
+      <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <i class="bi bi-list"></i>
+      </button>
+      <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
@@ -137,10 +143,9 @@ try {
       <a href="../nurse/nurse_dashboard.php" class="menu-item">Dashboard</a>
       <a href="../nurse/nurse_profile.php" class="menu-item active">Profile</a>
       <a href="../nurse/nurse_patients.php" class="menu-item ">Patients</a>
-      <a href="../settings.php" class="menu-item">Settings</a>
+      <a href="../nurse/nurse_settings.php" class="menu-item">Settings</a>
       
       <div class="user-profile">
-        <div class="avatar"></div>
         <span><?php echo htmlspecialchars($fullName); ?></span>
       </div>
     </div>
@@ -287,8 +292,10 @@ try {
     </div>
   </div>
 
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../js/logout.js"></script> 
+  <script src="../js/logout.js"></script>
+  <script src="js/notifications.js"></script> 
   <script>
     // User data from PHP
     const userData = {
@@ -560,6 +567,12 @@ try {
         Swal.fire("Error", "Failed to time out. Please try again.", "error");
       }
     });
+    
+    // Initialize notification system
+    if (window.NurseNotificationSystem) {
+      NurseNotificationSystem.init();
+    }
   </script>
+  <script src="../js/mobile-menu.js"></script>
 </body>
 </html>

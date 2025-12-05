@@ -12,11 +12,12 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// ✅ Define user info safely
+// ✅ Get user data safely
 $user_id = $_SESSION['user_id'];
-$first_name = $_SESSION['fname'] ?? 'Admin';
+$first_name = $_SESSION['fname'] ?? 'Doctor';
 $last_name = $_SESSION['lname'] ?? '';
-$user_role = $_SESSION['role'] ?? 'admin';
+$user_role = $_SESSION['role'] ?? 'doctor';
+$user_name = $first_name; // ✅ FIX: Add this line - it was missing!
 $fullName = trim($first_name . ' ' . $last_name);
 
 // Log session info for debugging
@@ -29,7 +30,7 @@ $loggedInPhysician = [
 ];
 
 // Check if user is an employee
-if (!in_array($_SESSION['role'], ['employee', 'doctor', 'dentist', 'nurse', 'staff', 'admin'])) {
+if (!in_array($_SESSION['role'], [ 'doctor', 'dentist', 'nurse', 'staff', 'admin'])) {
     header('Location: ../auth/login.php');
     exit;
 }
@@ -57,7 +58,7 @@ try {
         $user['position'] = $employee['role'] ?? ucfirst($user['role'] ?? 'Staff');
         $user['employee_id'] = $employee['id'] ?? 'N/A';
         $user['hire_date'] = $employee['created_at'] ?? null;
-        $user['employee_username'] = $employee['username'] ?? $user['email'];
+        // Username removed - not used in system
         
         // Use employee data as primary if available
         if (empty($user['phone']) && !empty($employee['phone'])) {
@@ -122,7 +123,9 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="../css/nav.css">
-    <link rel="stylesheet" href="../dental/css/dental_profile.css">
+    <link rel="stylesheet" href="../medical/css/medical_profile.css">
+    <link rel="stylesheet" href="../medical/css/responsive.css" />
+    <link rel="stylesheet" href="../admin/css/notifications.css" />
 </head>
 <body>
    <!-- HEADER -->
@@ -138,8 +141,75 @@ try {
     </div>
 
     <div class="header-icons">
-      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <!-- Mobile Menu Icon -->
+      <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <i class="bi bi-list"></i>
+      </button>
+      <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="side-drawer" id="sideDrawer">
+    <button class="close-drawer" id="closeDrawer">×</button>
+
+    <div class="drawer-header">
+      <div class="drawer-title">Manage Availability</div>
+      <div class="drawer-subtitle" id="drawerDate">November 10</div>
+    </div>
+
+    <div class="drawer-content">
+      <div class="section">
+        <div class="section-title">Availability Options</div>
+
+        <div class="option-card" id="optionWholeDay" data-mode="whole-day">
+          <div class="option-header">
+            <span>✅</span>
+            <span>Available for the Whole Day</span>
+          </div>
+          <div class="option-desc">All time slots for this day are open for appointments.</div>
+        </div>
+
+        <div class="option-card" id="optionUnavailable" data-mode="unavailable-day">
+          <div class="option-header">
+            <span>🚫</span>
+            <span>Unavailable for the Whole Day</span>
+          </div>
+          <div class="option-desc">Mark entire day as unavailable (e.g., vacation, conference).</div>
+        </div>
+
+        <div class="option-card" id="optionCustomize" data-mode="customize">
+          <div class="option-header">
+            <span>🕒</span>
+            <span>Customize Availability</span>
+          </div>
+          <div class="option-desc">Select or drag across time slots to mark them as available or unavailable.</div>
+        </div>
+
+        <div id="reasonField" class="form-group" style="display: none; margin-top: 12px;">
+          <label style="font-size: 14px; font-weight: 500; margin-bottom: 6px; display: block;">Reason (Optional)</label>
+          <input type="text" id="reasonInput" placeholder="e.g., Conference, Personal Leave, Vacation" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Schedule Timeline</div>
+        <div class="timeline">
+          <div class="timeline-header">
+            <span>🕗 8:00 AM — 5:00 PM</span>
+          </div>
+          <div class="timeline-slots" id="timelineSlots"></div>
+        </div>
+        <div class="tip-box" id="tipBox" style="display: none;">
+          💡 <strong>Tip:</strong> Click on any time slot to toggle between Available → Unavailable → Not Set. You can also drag across multiple slots in Customize mode.
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="btn-cal btn-secondary-cal" id="backBtn">🔙 Back to Calendar</button>
+      <button class="btn-cal btn-primary-cal" id="saveChanges">💾 Save Changes</button>
     </div>
   </div>
 
@@ -147,14 +217,12 @@ try {
   <div class="main-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <a href="../dental/dental_dashboard.php" class="menu-item">Dashboard</a>
-      <a href="../dental/dental_profile.php" class="menu-item active">Profile</a>
-      <a href="../dental/dental_patients.php" class="menu-item ">Patients</a>
-      <a href="../dental/dental_appointments.php" class="menu-item">Appointments</a>
-      <a href="../dental/settings.php" class="menu-item">Settings</a>
-      
+          <a href="../medical/medical_dashboard.php" class="menu-item">Dashboard</a>
+          <a href="../medical/medical_profile.php" class="menu-item active">Profile</a>
+          <a href="../medical/medical_patients.php" class="menu-item ">Patients</a>
+          <a href="../medical/medical_appointments.php" class="menu-item">Appointments</a>
+          <a href="../medical/medical_settings.php" class="menu-item ">Settings</a>
       <div class="user-profile">
-        <div class="avatar"></div>
         <span><?php echo htmlspecialchars($fullName); ?></span>
       </div>
     </div>
@@ -170,6 +238,9 @@ try {
         </li>
         <li class="nav-item" role="presentation">
           <a class="nav-link" id="profile-tab" data-tab="profile" href="#">Profile</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="schedule-tab" data-tab="schedule" href="#">Make a schedule</a>
         </li>
       </ul>
 
@@ -297,12 +368,83 @@ try {
             </form>
           </div>
         </div>
+
+        <!-- Make a Schedule Tab -->
+        <div class="tab-pane" id="schedule">
+          <?php
+          $department = 'Medical';
+          $departmentClass = 'medical';
+          $departmentIcon = 'bi-hospital-fill';
+          ?>
+          <div class="department-indicator <?php echo $departmentClass; ?>">
+            <i class="bi <?php echo $departmentIcon; ?>"></i>
+            <div>
+              <h5><?php echo $department; ?> Department</h5>
+              <small>Manage your availability for <?php echo strtolower($department); ?> appointments</small>
+            </div>
+          </div>
+
+          <div class="calendar-wrapper">
+            <div class="calendar-section" id="calendarSection">
+              <div class="calendar-header">
+                <h1 class="calendar-title">Doctor Schedule Calendar</h1>
+                <div class="nav-buttons">
+                  <button class="nav-btn" id="prevBtn">◀</button>
+                  <button class="today-btn" id="todayBtn">Today</button>
+                  <button class="nav-btn" id="nextBtn">▶</button>
+                </div>
+              </div>
+
+              <div class="month-year" id="monthYear"></div>
+
+              <div class="legend">
+                <div class="legend-item">
+                  <div class="legend-dot available"></div>
+                  <span>Available</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot unavailable"></div>
+                  <span>Unavailable</span>
+                </div>
+              </div>
+
+              <div class="info-banner">
+                💡 <strong>Tip:</strong> Click on any date to manage your availability for that day. Weekends are automatically disabled.
+              </div>
+
+              <div class="calendar-grid">
+                <div class="weekdays">
+                  <div class="weekday">Mon</div>
+                  <div class="weekday">Tue</div>
+                  <div class="weekday">Wed</div>
+                  <div class="weekday">Thu</div>
+                  <div class="weekday">Fri</div>
+                  <div class="weekday">Sat</div>
+                  <div class="weekday">Sun</div>
+                </div>
+                <div class="days-grid" id="daysGrid"></div>
+              </div>
+            </div>
+
+            <div class="time-section">
+              <div class="time-header">
+                <div class="time-title">Time</div>
+                <div class="selected-date" id="selectedDate">Select a date</div>
+              </div>
+              <div id="timeSlotContainer">
+                <div class="no-selection">Select a date to view time slots</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../js/logout.js"></script> 
+  <script src="../js/logout.js"></script>
+  <script src="js/notifications.js"></script> 
   <script>
     // User data from PHP
     const userData = {
@@ -354,6 +496,14 @@ try {
                 if (targetPane) {
                     targetPane.classList.add('active');
                     console.log('Showing pane:', targetTab);
+                    
+                    if (targetTab === 'schedule') {
+                        setTimeout(() => {
+                            if (!document.getElementById('daysGrid').children.length) {
+                                initCalendar();
+                            }
+                        }, 100);
+                    }
                 } else {
                     console.error('Tab pane not found:', targetTab);
                 }
@@ -574,6 +724,529 @@ try {
         Swal.fire("Error", "Failed to time out. Please try again.", "error");
       }
     });
-  </script>
+    
+    // ===== NEW CALENDAR FUNCTIONALITY =====
+    let currentDate = new Date();
+    let selectedDate = null;
+    let schedules = {};
+    let drawerMode = null;
+    let isDragging = false;
+    let dragMode = null;
+
+    // Time slots in 30-minute intervals from 8:00 AM to 5:00 PM
+    const hours = [];
+    for (let hour = 8; hour <= 17; hour++) {
+      hours.push(hour + 0.0); // :00
+      if (hour < 17) {
+        hours.push(hour + 0.5); // :30
+      }
+    }
+
+    function initCalendar() {
+      renderCalendar();
+      initCalendarEventListeners();
+      loadSchedules();
+    }
+
+    function initCalendarEventListeners() {
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+
+      document.getElementById('todayBtn').addEventListener('click', () => {
+        currentDate = new Date();
+        renderCalendar();
+        selectDate(currentDate);
+      });
+
+      document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+      document.getElementById('backBtn').addEventListener('click', closeDrawer);
+      document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+
+      document.getElementById('optionWholeDay').addEventListener('click', () => {
+        setDrawerMode('whole-day');
+      });
+
+      document.getElementById('optionUnavailable').addEventListener('click', () => {
+        setDrawerMode('unavailable-day');
+      });
+
+      document.getElementById('optionCustomize').addEventListener('click', () => {
+        setDrawerMode('customize');
+      });
+
+      document.getElementById('saveChanges').addEventListener('click', saveScheduleChanges);
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        dragMode = null;
+      });
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      document.getElementById('monthYear').textContent = 
+        currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+      const daysGrid = document.getElementById('daysGrid');
+      daysGrid.innerHTML = '';
+
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+        const day = prevMonthLastDay - i;
+        const cell = createDayCell(day, true, false);
+        daysGrid.appendChild(cell);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        const isToday = isToday_helper(date);
+        const cell = createDayCell(day, false, isWeekend, isToday, date);
+        daysGrid.appendChild(cell);
+      }
+
+      const remainingCells = 42 - daysGrid.children.length;
+      for (let day = 1; day <= remainingCells; day++) {
+        const cell = createDayCell(day, true, false);
+        daysGrid.appendChild(cell);
+      }
+    }
+
+    function createDayCell(day, isOtherMonth, isWeekend, isToday = false, date = null) {
+      const cell = document.createElement('div');
+      cell.className = 'day-cell';
+      
+      if (isOtherMonth) cell.classList.add('other-month');
+      if (isWeekend) cell.classList.add('weekend');
+      if (isToday) cell.classList.add('today');
+
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'day-number';
+      dayNumber.textContent = day;
+      cell.appendChild(dayNumber);
+
+      if (date && !isOtherMonth) {
+        const dateKey = formatDate(date);
+        const daySchedules = schedules[dateKey] || {};
+        
+        const schedulesContainer = document.createElement('div');
+        schedulesContainer.className = 'day-schedules';
+        
+        if (daySchedules.wholeDay) {
+          const indicator = document.createElement('div');
+          indicator.className = 'schedule-indicator available';
+          schedulesContainer.appendChild(indicator);
+        } else if (daySchedules.unavailableDay) {
+          const indicator = document.createElement('div');
+          indicator.className = 'schedule-indicator unavailable';
+          schedulesContainer.appendChild(indicator);
+        } else if (daySchedules.slots) {
+          const available = Object.values(daySchedules.slots).filter(s => s === 'available').length;
+          const unavailable = Object.values(daySchedules.slots).filter(s => s === 'unavailable').length;
+          
+          if (available > 0) {
+            const indicator = document.createElement('div');
+            indicator.className = 'schedule-indicator available';
+            schedulesContainer.appendChild(indicator);
+          }
+          if (unavailable > 0) {
+            const indicator = document.createElement('div');
+            indicator.className = 'schedule-indicator unavailable';
+            schedulesContainer.appendChild(indicator);
+          }
+        }
+        
+        cell.appendChild(schedulesContainer);
+
+        cell.addEventListener('click', () => {
+          if (!isWeekend) {
+            openDrawer(date);
+          }
+        });
+      }
+
+      return cell;
+    }
+
+    function selectDate(date) {
+      selectedDate = date;
+      
+      document.querySelectorAll('.day-cell').forEach(cell => {
+        cell.classList.remove('selected');
+      });
+
+      document.getElementById('selectedDate').textContent = 
+        date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      renderTimeSlots(date);
+    }
+
+    function renderTimeSlots(date) {
+      const container = document.getElementById('timeSlotContainer');
+      const dateKey = formatDate(date);
+      const daySchedule = schedules[dateKey] || {};
+      
+      container.innerHTML = '';
+
+      hours.forEach(hour => {
+        const timeSlot = document.createElement('div');
+        timeSlot.className = 'time-slot';
+        
+        const timeStr = formatHour(hour);
+        timeSlot.textContent = timeStr;
+
+        if (daySchedule.wholeDay) {
+          timeSlot.classList.add('has-schedule');
+        } else if (daySchedule.unavailableDay) {
+          timeSlot.classList.add('unavailable');
+        } else if (daySchedule.slots && daySchedule.slots[hour]) {
+          timeSlot.classList.add(daySchedule.slots[hour] === 'available' ? 'has-schedule' : 'unavailable');
+        }
+
+        timeSlot.addEventListener('click', () => {
+          openDrawer(date);
+        });
+
+        container.appendChild(timeSlot);
+      });
+    }
+
+    function openDrawer(date) {
+      selectedDate = date;
+      selectDate(date);
+      
+      document.getElementById('drawerDate').textContent = 
+        date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      
+      const dateKey = formatDate(date);
+      const daySchedule = schedules[dateKey] || {};
+      
+      if (daySchedule.wholeDay) {
+        setDrawerMode('whole-day');
+      } else if (daySchedule.unavailableDay) {
+        setDrawerMode('unavailable-day');
+      } else {
+        setDrawerMode('customize');
+      }
+      
+      renderTimelineSlots(date);
+      
+      document.getElementById('sideDrawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('active');
+      document.getElementById('calendarSection').classList.add('drawer-open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('sideDrawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('active');
+      document.getElementById('calendarSection').classList.remove('drawer-open');
+    }
+
+    function setDrawerMode(mode) {
+      drawerMode = mode;
+      
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      
+      document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+      
+      const reasonField = document.getElementById('reasonField');
+      const tipBox = document.getElementById('tipBox');
+      
+      if (mode === 'whole-day') {
+        const dateKey = formatDate(selectedDate);
+        schedules[dateKey] = { wholeDay: true };
+        renderTimelineSlots(selectedDate);
+        tipBox.style.display = 'none';
+        reasonField.style.display = 'none';
+      } else if (mode === 'unavailable-day') {
+        const dateKey = formatDate(selectedDate);
+        schedules[dateKey] = { unavailableDay: true };
+        renderTimelineSlots(selectedDate);
+        tipBox.style.display = 'none';
+        reasonField.style.display = 'block';
+      } else {
+        const dateKey = formatDate(selectedDate);
+        if (schedules[dateKey]?.wholeDay || schedules[dateKey]?.unavailableDay) {
+          schedules[dateKey] = { slots: {} };
+        }
+        renderTimelineSlots(selectedDate);
+        tipBox.style.display = 'block';
+        reasonField.style.display = 'none';
+      }
+    }
+
+    function renderTimelineSlots(date) {
+      const container = document.getElementById('timelineSlots');
+      const dateKey = formatDate(date);
+      const daySchedule = schedules[dateKey] || {};
+      
+      container.innerHTML = '';
+
+      hours.forEach(hour => {
+        const slot = document.createElement('div');
+        slot.className = 'timeline-slot';
+        slot.dataset.hour = hour;
+        
+        let status = 'neutral';
+        if (daySchedule.wholeDay) {
+          status = 'available';
+        } else if (daySchedule.unavailableDay) {
+          status = 'unavailable';
+        } else if (daySchedule.slots && daySchedule.slots[hour]) {
+          status = daySchedule.slots[hour];
+        }
+        
+        slot.classList.add(status);
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'slot-time';
+        timeDiv.textContent = formatHour(hour);
+        
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'slot-status';
+        
+        const indicator = document.createElement('div');
+        indicator.className = `status-indicator ${status}`;
+        
+        const statusText = document.createElement('span');
+        statusText.textContent = status === 'neutral' ? 'Not Set' : status.charAt(0).toUpperCase() + status.slice(1);
+        
+        statusDiv.appendChild(indicator);
+        statusDiv.appendChild(statusText);
+        
+        slot.appendChild(timeDiv);
+        slot.appendChild(statusDiv);
+        
+        if (status !== 'booked') {
+          slot.addEventListener('click', (e) => {
+            if (!isDragging) {
+              toggleSlotStatusClick(slot);
+            }
+          });
+          
+          if (drawerMode === 'customize') {
+            slot.addEventListener('mousedown', (e) => {
+              e.preventDefault();
+              isDragging = true;
+              const currentStatus = getSlotStatus(slot);
+              dragMode = currentStatus === 'available' ? 'unavailable' : 'available';
+              toggleSlotStatus(slot, dragMode);
+            });
+            
+            slot.addEventListener('mouseenter', () => {
+              if (isDragging && dragMode) {
+                toggleSlotStatus(slot, dragMode);
+              }
+            });
+          }
+        }
+        
+        container.appendChild(slot);
+      });
+    }
+
+    function getSlotStatus(slot) {
+      if (slot.classList.contains('available')) return 'available';
+      if (slot.classList.contains('unavailable')) return 'unavailable';
+      return 'neutral';
+    }
+
+    function toggleSlotStatusClick(slot) {
+      const currentStatus = getSlotStatus(slot);
+      let newStatus;
+      
+      if (currentStatus === 'neutral') {
+        newStatus = 'available';
+      } else if (currentStatus === 'available') {
+        newStatus = 'unavailable';
+      } else {
+        newStatus = 'neutral';
+      }
+      
+      toggleSlotStatus(slot, newStatus);
+    }
+
+    function toggleSlotStatus(slot, newStatus) {
+      if (slot.classList.contains('booked')) return;
+      
+      slot.classList.remove('available', 'unavailable', 'neutral');
+      slot.classList.add(newStatus);
+      
+      const indicator = slot.querySelector('.status-indicator');
+      const statusText = slot.querySelector('.slot-status span');
+      
+      indicator.className = `status-indicator ${newStatus}`;
+      statusText.textContent = newStatus === 'neutral' ? 'Not Set' : newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+      
+      const dateKey = formatDate(selectedDate);
+      const hour = parseFloat(slot.dataset.hour);
+      
+      if (!schedules[dateKey]) schedules[dateKey] = { slots: {} };
+      if (!schedules[dateKey].slots) schedules[dateKey].slots = {};
+      
+      if (newStatus === 'neutral') {
+        delete schedules[dateKey].slots[hour];
+      } else {
+        schedules[dateKey].slots[hour] = newStatus;
+      }
+    }
+
+    async function saveScheduleChanges() {
+      const dateKey = formatDate(selectedDate);
+      const daySchedule = schedules[dateKey];
+      
+      if (!daySchedule) {
+        Swal.fire('Error', 'No changes to save', 'info');
+        return;
+      }
+
+      try {
+        let payload = {
+          action: 'create',
+          date: dateKey
+        };
+
+        if (daySchedule.wholeDay) {
+          payload.scheduleType = 'available';
+          payload.startTime = '08:00';
+          // Store end time as 17:30 to allow slot at 17:00 (5:00 PM) for 30-minute appointments
+          payload.endTime = '17:30';
+        } else if (daySchedule.unavailableDay) {
+          payload.scheduleType = 'unavailable';
+          payload.reason = document.getElementById('reasonInput').value;
+        } else if (daySchedule.slots) {
+          payload.scheduleType = 'custom';
+          payload.slots = daySchedule.slots;
+        }
+
+        const response = await fetch('../crud/schedule_handler.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await loadSchedules();
+          
+          renderCalendar();
+          if (selectedDate) {
+            selectDate(selectedDate);
+          }
+          closeDrawer();
+          Swal.fire('Success!', 'Schedule saved successfully!', 'success');
+          window.dispatchEvent(new CustomEvent('scheduleUpdated', {
+            detail: {
+              userId: <?php echo (int)$user_id; ?>,
+              date: dateKey
+            }
+          }));
+        } else {
+          throw new Error(result.error || 'Failed to save schedule');
+        }
+        
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('Error', error.message || 'Failed to save schedule', 'error');
+      }
+    }
+
+    async function loadSchedules() {
+      try {
+        const response = await fetch('../crud/schedule_handler.php?action=list');
+        const result = await response.json();
+        
+        if (result.success) {
+          schedules = {};
+          
+          result.data.forEach(schedule => {
+            const dateKey = schedule.schedule_date;
+            
+            if (!schedules[dateKey]) {
+              schedules[dateKey] = { slots: {} };
+            }
+            
+            if (schedule.schedule_type === 'unavailable' && !schedule.start_time) {
+              schedules[dateKey] = { unavailableDay: true };
+            } else if (schedule.schedule_type === 'available' && 
+                       schedule.start_time === '08:00:00' && 
+                       schedule.end_time === '17:00:00') {
+              schedules[dateKey] = { wholeDay: true };
+            } else {
+              // Handle custom time slots with 30-minute intervals
+              const startParts = schedule.start_time.split(':');
+              const endParts = schedule.end_time.split(':');
+              const startHour = parseInt(startParts[0]) + (parseInt(startParts[1]) / 60);
+              const endHour = parseInt(endParts[0]) + (parseInt(endParts[1]) / 60);
+              
+              // Generate 30-minute intervals
+              for (let slot = startHour; slot < endHour; slot += 0.5) {
+                schedules[dateKey].slots[slot] = schedule.schedule_type;
+              }
+            }
+          });
+          
+          renderCalendar();
+        }
+      } catch (error) {
+        console.error('Error loading schedules:', error);
+      }
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatHour(hour) {
+      const isHalfHour = hour % 1 === 0.5;
+      const hourInt = Math.floor(hour);
+      const displayHour = hourInt > 12 ? hourInt - 12 : hourInt === 0 ? 12 : hourInt;
+      const ampm = hourInt >= 12 ? 'PM' : 'AM';
+      const minutes = isHalfHour ? '30' : '00';
+      return `${displayHour}:${minutes} ${ampm}`;
+    }
+
+    function isToday_helper(date) {
+      const today = new Date();
+      return date.getDate() === today.getDate() &&
+             date.getMonth() === today.getMonth() &&
+             date.getFullYear() === today.getFullYear();
+    }
+
+    document.querySelector('[data-tab="schedule"]').addEventListener('click', function() {
+      setTimeout(() => {
+        if (!document.getElementById('daysGrid').children.length) {
+          initCalendar();
+        }
+      }, 100);
+    });
+    
+    // Initialize notification system
+    if (window.MedicalNotificationSystem) {
+      MedicalNotificationSystem.init();
+    }
+   </script>
+   <script src="../js/mobile-menu.js"></script>
 </body>
 </html>

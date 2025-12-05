@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../includes/activity_logger.php';
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -41,9 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit();
             }
             
-            // Generate username from email
-            $username = explode('@', $email)[0];
-            
             // Hash password
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
@@ -57,15 +55,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
             // Insert into employees table
             $stmt = $pdo->prepare("
-                INSERT INTO employees (user_id, first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, username, password, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())
+                INSERT INTO employees (user_id, first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, password, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())
             ");
             $stmt->execute([
                 $user_id, $first_name, $middle_name, $last_name, $birth_date, $age, 
-                $gender, $email, $phone, $address, $role, $username, $hashed_password
+                $gender, $email, $phone, $address, $role, $hashed_password
             ]);
             
             $pdo->commit();
+            
+            // Log activity
+            $employeeName = trim($first_name . ' ' . $last_name);
+            $roleName = ucfirst($role);
+            logActivity($pdo, $_SESSION['user_id'], 'Add Employee', "Added new $roleName: $employeeName ($email)");
             
             echo json_encode(['success' => true, 'message' => 'Employee added successfully']);
             exit();
@@ -97,15 +100,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $today = new DateTime();
             $age = $today->diff($birthDate)->y;
             
-            // Get current employee email
-            $stmt = $pdo->prepare("SELECT email FROM employees WHERE id = ?");
+            // Get current employee data including user_id
+            $stmt = $pdo->prepare("SELECT email, user_id FROM employees WHERE id = ?");
             $stmt->execute([$employee_id]);
             $currentEmployee = $stmt->fetch();
             
-            // Check if new email already exists (excluding current employee)
+            if (!$currentEmployee) {
+                echo json_encode(['success' => false, 'message' => 'Employee not found']);
+                exit();
+            }
+            
+            $user_id = $currentEmployee['user_id'];
+            
+            // Check if new email already exists (excluding current user)
             if ($email !== $currentEmployee['email']) {
-                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                $stmt->execute([$email]);
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+                $stmt->execute([$email, $user_id]);
                 if ($stmt->fetch()) {
                     echo json_encode(['success' => false, 'message' => 'Email already exists']);
                     exit();
@@ -115,14 +125,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             // Start transaction
             $pdo->beginTransaction();
             
-            // Update users table
+            // Update users table using user_id (more reliable than email)
             if (!empty($password)) {
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, password = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE email = ?");
-                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $hashed_password, $role, $birth_date, $gender, $address, $currentEmployee['email']]);
+                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, password = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE id = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $hashed_password, $role, $birth_date, $gender, $address, $user_id]);
             } else {
-                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE email = ?");
-                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $role, $birth_date, $gender, $address, $currentEmployee['email']]);
+                $stmt = $pdo->prepare("UPDATE users SET fname = ?, mname = ?, lname = ?, email = ?, phone = ?, role = ?, date_of_birth = ?, gender = ?, address = ? WHERE id = ?");
+                $stmt->execute([$first_name, $middle_name, $last_name, $email, $phone, $role, $birth_date, $gender, $address, $user_id]);
             }
             
             // Update employees table
@@ -136,6 +146,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             
             $pdo->commit();
+            
+            // Log activity
+            $employeeName = trim($first_name . ' ' . $last_name);
+            $roleName = ucfirst($role);
+            logActivity($pdo, $_SESSION['user_id'], 'Edit Employee', "Updated $roleName: $employeeName ($email)");
             
             echo json_encode(['success' => true, 'message' => 'Employee updated successfully']);
             exit();
@@ -152,8 +167,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $employee_id = $_POST['employee_id'];
             $status = $_POST['status'];
             
+            // Get employee details for logging
+            $stmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name, role FROM employees WHERE id = ?");
+            $stmt->execute([$employee_id]);
+            $employee = $stmt->fetch();
+            
             $stmt = $pdo->prepare("UPDATE employees SET status = ? WHERE id = ?");
             $stmt->execute([$status, $employee_id]);
+            
+            // Log activity
+            if ($employee) {
+                $statusName = ucfirst($status);
+                logActivity($pdo, $_SESSION['user_id'], 'Update Employee Status', "Changed status of {$employee['name']} to $statusName");
+            }
             
             echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
             exit();
@@ -168,8 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         try {
             $employee_id = $_POST['employee_id'];
             
-            // Get employee email
-            $stmt = $pdo->prepare("SELECT email FROM employees WHERE id = ?");
+            // Get employee details for logging
+            $stmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name, email, role FROM employees WHERE id = ?");
             $stmt->execute([$employee_id]);
             $employee = $stmt->fetch();
             
@@ -186,6 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt->execute([$employee_id]);
                 
                 $pdo->commit();
+                
+                // Log activity
+                $roleName = ucfirst($employee['role'] ?? 'Employee');
+                logActivity($pdo, $_SESSION['user_id'], 'Delete Employee', "Deleted $roleName: {$employee['name']} ({$employee['email']})");
             }
             
             echo json_encode(['success' => true, 'message' => 'Employee deleted successfully']);
@@ -199,12 +229,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Fetch all employees
-$stmt = $pdo->query("SELECT * FROM employees ORDER BY status ASC, last_name ASC");
+// Fetch all employees - includes all staff roles (doctors, dentists, nurses, staff, employees)
+// This is for the Active/Inactive tabs in user management
+$stmt = $pdo->query("
+    SELECT 
+        COALESCE(e.id, u.id) as id,
+        u.id as user_id,
+        u.fname as first_name,
+        u.mname as middle_name,
+        u.lname as last_name,
+        u.email,
+        u.phone,
+        COALESCE(e.address, u.address) as address,
+        u.role,
+        COALESCE(e.status, 'active') as status,
+        COALESCE(e.birth_date, u.date_of_birth) as birth_date,
+        e.age,
+        COALESCE(e.gender, u.gender) as gender,
+        COALESCE(e.created_at, u.created_at) as created_at,
+        COALESCE(e.updated_at, u.updated_at) as updated_at
+    FROM users u
+    LEFT JOIN employees e ON u.id = e.user_id
+    WHERE u.role IN ('doctor', 'dentist', 'nurse', 'staff', 'employee')
+    ORDER BY COALESCE(e.status, 'active') ASC, u.lname ASC, u.fname ASC
+");
 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch today's schedules
-$today = date('Y-m-d');
+// Get selected date from URL parameter or default to today
+$selectedDate = isset($_GET['date']) && !empty($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+$displayDate = $selectedDate;
+
+// Check if selected date is weekend (Saturday = 6, Sunday = 0)
+$dayOfWeek = date('w', strtotime($selectedDate)); // 0 = Sunday, 6 = Saturday
+$isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
+
+// Fetch schedules for selected date - Doctors, dentists, and nurses
+// Doctors/dentists show schedules, nurses show attendance
 $stmt = $pdo->prepare("
     SELECT 
         u.id as user_id,
@@ -213,7 +273,6 @@ $stmt = $pdo->prepare("
         u.lname as last_name,
         u.email,
         u.role,
-        u.photo,
         ds.schedule_date,
         ds.start_time as time_in,
         ds.end_time as time_out,
@@ -222,21 +281,46 @@ $stmt = $pdo->prepare("
         ds.reason,
         att.status as current_status,
         att.time_in as last_check_in,
+        att.date as attendance_date,
         CASE 
             WHEN att.time_in IS NOT NULL AND att.time_out IS NULL THEN 'in'
             WHEN att.time_out IS NOT NULL THEN 'out'
             ELSE 'out'
-        END as availability_status
+        END as availability_status,
+        DATE_FORMAT(ds.start_time, '%h:%i %p') as time_in_formatted,
+        DATE_FORMAT(ds.end_time, '%h:%i %p') as time_out_formatted,
+        CASE 
+            WHEN att.time_in IS NOT NULL THEN 
+                TIME_FORMAT(att.time_in, '%h:%i %p')
+            ELSE NULL
+        END as attendance_time_in,
+        CASE 
+            WHEN att.time_out IS NOT NULL THEN 
+                TIME_FORMAT(att.time_out, '%h:%i %p')
+            ELSE NULL
+        END as attendance_time_out,
+        CASE
+            WHEN ds.start_time IS NOT NULL AND ds.end_time IS NOT NULL THEN
+                CONCAT(
+                    TIMESTAMPDIFF(HOUR, ds.start_time, ds.end_time), 'h ',
+                    MOD(TIMESTAMPDIFF(MINUTE, ds.start_time, ds.end_time), 60), 'm'
+                )
+            ELSE NULL
+        END as duration
     FROM users u
+    LEFT JOIN employees e ON u.id = e.user_id
     LEFT JOIN doctor_schedules ds ON u.id = ds.user_id 
         AND ds.schedule_date = ?
     LEFT JOIN attendance att ON u.id = att.user_id 
-        AND att.date = CURDATE()
-    WHERE u.role IN ('doctor', 'dentist', 'nurse', 'staff', 'employee')
+        AND att.date = ?
+    WHERE u.role IN ('doctor', 'dentist', 'nurse')
     ORDER BY u.lname ASC, u.fname ASC
 ");
-$stmt->execute([$today]);
+$stmt->execute([$selectedDate, $selectedDate]);
 $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Format display date
+$displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -247,6 +331,8 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
   
   <link href="../admin/css/userManagement.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet">
+  <link href="../admin/css/responsive.css" rel="stylesheet">
+  <link href="../admin/css/notifications.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -268,7 +354,11 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <div class="header-icons">
-      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <!-- Mobile Menu Icon -->
+      <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <i class="bi bi-list"></i>
+      </button>
+      <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
     </div>
   </div>
@@ -280,10 +370,10 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <a href="../admin/patients.php" class="menu-item">Patient</a>
         <a href="../admin/userManagement.php" class="menu-item active">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
+        <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
       <div class="user-profile">
-        <div class="avatar"></div>
         <span><?php echo htmlspecialchars($userName); ?></span>
       </div>
     </div>
@@ -320,9 +410,9 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
           <div class="table-container">
             <!-- Filter Controls -->
             <div class="schedule-filters mb-4">
-              <div class="row align-items-end">
-                <div class="col-md-3">
-                  <label class="form-label fw-bold"><i class="bi bi-funnel"></i> View Range</label>
+              <div class="row align-items-end g-3">
+                <div class="col-md">
+                  <label class="form-label">View Range</label>
                   <select id="scheduleViewType" class="form-select">
                     <option value="today" selected>Today</option>
                     <option value="week">This Week</option>
@@ -331,25 +421,26 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="all">All Upcoming</option>
                   </select>
                 </div>
-                <div class="col-md-3">
-  <label class="form-label fw-bold"><i class="bi bi-hospital"></i> Department</label>
+                <div class="col-md">
+                  <label class="form-label">Department</label>
   <select id="scheduleDepartment" class="form-select">
     <option value="all" selected>All Departments</option>
     <option value="medical">Medical</option>
     <option value="dental">Dental</option>
   </select>
 </div>
-                <div class="col-md-3">
-                  <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Specific Date</label>
-                  <input type="date" id="scheduleDatePicker" class="form-control" value="<?php echo date('Y-m-d'); ?>" max="2099-12-31">
+                <div class="col-md">
+                  <label class="form-label">Specific Date</label>
+                  <input type="date" id="scheduleDatePicker" class="form-control" value="<?php echo htmlspecialchars($selectedDate); ?>" max="2099-12-31">
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold"><i class="bi bi-search"></i> Search Employee</label>
-                  <input type="text" id="scheduleSearch" class="form-control" placeholder="Search by name, email, or role...">
+                <div class="col-md">
+                  <label class="form-label">Search Employee</label>
+                  <input type="text" id="scheduleSearch" class="form-control" placeholder="Search by name, email or role..">
                 </div>
-                <div class="col-md-2">
-                  <button class="btn btn-outline-success w-100" onclick="refreshSchedule()">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                <div class="col-md">
+                  <label class="form-label">&nbsp;</label>
+                  <button class="btn btn-primary w-100" onclick="searchSchedule()">
+                    <i class="bi bi-search"></i> Search
                   </button>
                 </div>
               </div>
@@ -358,7 +449,7 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- Schedule Header -->
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 class="mb-0" id="scheduleDateDisplay">
-                <i class="bi bi-calendar-week"></i> Today's Schedule - <?php echo date('l, F j, Y'); ?>
+                <i class="bi bi-calendar-week"></i> Schedule - <?php echo htmlspecialchars($displayDateFormatted); ?>
               </h5>
               <div>
                 <span class="badge bg-primary" id="scheduleCount">
@@ -378,13 +469,9 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php foreach ($todaySchedules as $emp): ?>
                 <div class="employee-schedule-row">
                   <div class="employee-schedule-info">
-                    <?php if (!empty($emp['photo'])): ?>
-                      <img src="<?php echo htmlspecialchars($emp['photo']); ?>" class="employee-photo-small" alt="<?php echo htmlspecialchars($emp['first_name']); ?>">
-                    <?php else: ?>
                       <div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center">
                         <i class="bi bi-person-fill text-white" style="font-size: 1rem;"></i>
                       </div>
-                    <?php endif; ?>
                     <div>
                       <div><strong><?php echo htmlspecialchars($emp['first_name'] . ' ' . ($emp['middle_name'] ? $emp['middle_name'] . ' ' : '') . $emp['last_name']); ?></strong></div>
                       <div class="text-muted" style="font-size: 0.85rem;">
@@ -395,34 +482,71 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                   </div>
                   <div class="employee-schedule-details">
-    <?php if ($emp['time_in'] && $emp['is_available']): ?>
-      <?php if ($emp['schedule_type'] === 'unavailable'): ?>
-        <div class="text-center">
-          <span class="availability-badge availability-unavailable">
-            <i class="bi bi-calendar-x"></i> Unavailable
-            <?php if ($emp['reason']): ?>
-              <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.8;">
-                <?php echo htmlspecialchars($emp['reason']); ?>
-              </small>
-            <?php endif; ?>
-          </span>
+    <?php 
+    $role = strtolower($emp['role'] ?? '');
+    $isDoctorOrDentist = in_array($role, ['doctor', 'dentist']);
+    $isNurse = ($role === 'nurse');
+    
+    // For nurses: always show attendance time in/out
+    if ($isNurse): 
+      $hasAttendance = $emp['attendance_time_in'] || ($emp['last_check_in'] !== null);
+      if ($hasAttendance): ?>
+        <div class="schedule-table d-flex text-center">
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Time In</small>
+            <strong><?php echo $emp['attendance_time_in'] ?? ($emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : '--:--'); ?></strong>
+          </div>
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Time Out</small>
+            <strong><?php echo $emp['attendance_time_out'] ?? '--:--'; ?></strong>
+          </div>
+          <div class="flex-fill border-end p-2">
+            <small class="text-muted d-block">Status</small>
+            <?php
+            $status = $emp['availability_status'] ?? 'out';
+            $badges = [
+              'in' => '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
+              'out' => '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Checked Out</span>',
+              'break' => '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
+            ];
+            echo $badges[$status] ?? ($emp['last_check_in'] && !$emp['attendance_time_out'] ? $badges['in'] : $badges['out']);
+            ?>
+          </div>
+          <div class="flex-fill p-2">
+            <small class="text-muted d-block">Date</small>
+            <strong style="font-size: 0.85rem;">
+              <?php echo $emp['attendance_date'] ? date('M j, Y', strtotime($emp['attendance_date'])) : date('M j, Y', strtotime($selectedDate)); ?>
+            </strong>
+          </div>
         </div>
       <?php else: ?>
+        <div class="text-center">
+          <span class="availability-badge availability-unavailable">
+            <i class="bi bi-clock-history"></i> No Attendance Record
+          </span>
+        </div>
+            <?php endif; ?>
+    <?php 
+    // For doctors and dentists
+    elseif ($isDoctorOrDentist): 
+      // Check if it's weekend - show "No Schedule" for weekends
+      if ($isWeekend): ?>
+        <div class="text-center">
+          <span class="availability-badge availability-unavailable">
+            <i class="bi bi-calendar-x"></i> No Schedule
+          </span>
+        </div>
+      <?php else: 
+        // For weekdays (Monday-Friday): show schedule from doctor_schedules table
+        if ($emp['time_in'] && $emp['schedule_type'] !== 'unavailable' && $emp['is_available']): ?>
         <div class="schedule-table d-flex text-center">
           <div class="flex-fill border-end p-2">
             <small class="text-muted d-block">Schedule</small>
-            <strong><?php echo date('g:i A', strtotime($emp['time_in'])); ?> - <?php echo date('g:i A', strtotime($emp['time_out'])); ?></strong>
+              <strong><?php echo $emp['time_in_formatted'] ?? date('g:i A', strtotime($emp['time_in'])); ?> - <?php echo $emp['time_out_formatted'] ?? date('g:i A', strtotime($emp['time_out'])); ?></strong>
           </div>
           <div class="flex-fill border-end p-2">
             <small class="text-muted d-block">Duration</small>
-            <strong>
-              <?php
-              $start = new DateTime($emp['time_in']);
-              $end = new DateTime($emp['time_out']);
-              $diff = $start->diff($end);
-              echo $diff->h . 'h ' . $diff->i . 'm';
-              ?>
-            </strong>
+              <strong><?php echo $emp['duration'] ?? 'N/A'; ?></strong>
           </div>
           <div class="flex-fill border-end p-2">
             <small class="text-muted d-block">Attendance Status</small>
@@ -433,23 +557,35 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
               'out' => '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
               'break' => '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
             ];
-            echo $badges[$status];
+              echo $badges[$status] ?? $badges['out'];
             ?>
           </div>
           <div class="flex-fill p-2">
             <small class="text-muted d-block">Last Check-in</small>
             <strong style="font-size: 0.85rem;">
-              <?php echo $emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : 'N/A'; ?>
+                <?php echo $emp['attendance_time_in'] ?? ($emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : 'N/A'); ?>
             </strong>
           </div>
         </div>
+        <?php elseif ($emp['schedule_type'] === 'unavailable'): ?>
+          <div class="text-center">
+            <span class="availability-badge availability-unavailable">
+              <i class="bi bi-calendar-x"></i> Unavailable
+              <?php if (!empty($emp['reason'])): ?>
+                <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.8;">
+                  <?php echo htmlspecialchars($emp['reason']); ?>
+                </small>
       <?php endif; ?>
+            </span>
+          </div>
     <?php else: ?>
       <div class="text-center">
         <span class="availability-badge availability-unavailable">
-          <i class="bi bi-calendar-x"></i> Unavailable
+              <i class="bi bi-calendar-x"></i> No Schedule
         </span>
       </div>
+        <?php endif; ?>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 </div>
@@ -465,7 +601,6 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <table id="activeUsersTable" class="display table table-striped table-hover" style="width:100%">
               <thead>
                 <tr>
-                  <th>Photo</th>
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
@@ -484,7 +619,6 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <table id="inactiveUsersTable" class="display table table-striped table-hover" style="width:100%">
               <thead>
                 <tr>
-                  <th>Photo</th>
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
@@ -681,7 +815,13 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/logout.js"></script>
+  <script src="../admin/js/notifications.js"></script>
+  <script>
+    // Pass employees data to JavaScript
+    const employees = <?php echo json_encode($employees, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+  </script>
   <script src="../admin/userManagement.js"></script>
+  <script src="../js/mobile-menu.js"></script>
 
 </body>
 </html>

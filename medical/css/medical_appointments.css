@@ -330,3 +330,6 @@
     
     .btn-cancel { background: #f44336; color: white; }
     .btn-cancel:hover { background: #d32f2f; }
+    
+    .btn-fill-form { background: #8B0000; color: white; }
+    .btn-fill-form:hover { background: #A52A2A; }

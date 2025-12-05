@@ -26,6 +26,8 @@ body {
     align-items: center;
     height: 80px;
     position: relative;
+    flex-wrap: nowrap;
+    min-height: 80px;
 }
 
 /* Logo + University Name */
@@ -33,28 +35,43 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.logo {
+    flex-shrink: 0;
 }
 
 .logo img {
     width: 50px;
     height: 50px;
     object-fit: cover;
+    display: block;
+}
+
+.university-name {
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .university-name h1 {
     font-size: 25px;
     font-weight: 700;
     line-height: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ===== RIGHT ICONS ===== */
 .header-icons {
-    position: absolute;
-    top: 15px;
-    right: 30px;
     display: flex;
     align-items: center;
     gap: 15px;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 15px;
 }
 
 .notification-icon,
@@ -68,6 +85,7 @@ body {
     font-size: 20px;
     border-radius: 8px;
     transition: background-color 0.2s ease;
+    flex-shrink: 0;
 }
 
 .notification-icon:hover,
@@ -123,6 +141,7 @@ body {
     padding: 20px 25px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }

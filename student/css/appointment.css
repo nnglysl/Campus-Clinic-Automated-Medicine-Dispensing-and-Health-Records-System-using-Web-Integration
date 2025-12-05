@@ -15,6 +15,25 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
+    /* Remove margins on mobile for full-width */
+    @media (max-width: 991px) {
+      .department-selection {
+        margin: 0;
+        padding: 20px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 0;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .department-selection {
+        padding: 15px;
+        min-height: auto;
+      }
+    }
+    
     .department-selection h2 {
       font-size: 2rem;
       font-weight: 600;
@@ -49,6 +68,19 @@
       justify-content: center;
       gap: 15px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font: inherit;
+      position: relative;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .department-btn:focus {
+      outline: 3px solid rgba(66, 165, 245, 0.5);
+      outline-offset: 2px;
+    }
+    
+    .department-btn:active {
+      transform: translateY(-2px) scale(0.98);
     }
     
     .department-btn:hover {
@@ -56,14 +88,24 @@
       box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     }
     
-    .department-btn.dental:hover {
+    .department-btn.dental:hover,
+    .department-btn.dental.active {
       border-color: #42a5f5;
       background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     }
     
-    .department-btn.medical:hover {
+    .department-btn.dental:active {
+      background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+    }
+    
+    .department-btn.medical:hover,
+    .department-btn.medical.active {
       border-color: #66bb6a;
       background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    }
+    
+    .department-btn.medical:active {
+      background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
     }
     
     .department-btn i {
@@ -101,6 +143,18 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       min-height: 600px;
+    }
+    
+    /* Remove margins on mobile for full-width */
+    @media (max-width: 991px) {
+      .appointment-container {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 0;
+        min-height: auto;
+      }
     }
     
     .appointment-container.active {
@@ -466,9 +520,89 @@
       100% { transform: rotate(360deg); }
     }
     
+    /* Modal Centering - Override responsive CSS that breaks centering */
+    #bookingModal .modal-dialog {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      margin: 0 !important;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    #bookingModal .modal-content {
+      position: relative;
+      margin: 0;
+    }
+    
+    /* Ensure modal backdrop covers entire viewport */
+    #bookingModal.modal {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 1050;
+    }
+    
+    /* Ensure modal backdrop has proper z-index and doesn't conflict with menu overlay */
+    .modal-backdrop {
+      z-index: 1040 !important;
+      transition: opacity 0.15s linear;
+    }
+    
+    /* Hide menu overlay when modal is shown */
+    body.modal-open .menu-overlay {
+      display: none !important;
+      pointer-events: none !important;
+    }
+    
+    /* Optimize modal transitions for smoother experience */
+    .modal {
+      transition: opacity 0.15s linear;
+    }
+    
+    .modal.fade .modal-dialog {
+      transition: transform 0.15s ease-out;
+    }
+    
+    /* Remove backdrop immediately when modal is hidden */
+    .modal:not(.show) ~ .modal-backdrop {
+      display: none !important;
+    }
+    
+    /* Ensure backdrop doesn't persist after modal close */
+    body:not(.modal-open) .modal-backdrop {
+      display: none !important;
+    }
+    
+    /* SweetAlert2 centering - ensure it's always centered */
+    .swal2-popup {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      margin: 0 !important;
+    }
+    
+    .swal2-container {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
     @media (max-width: 968px) {
       .appointment-container { flex-direction: column; }
       .date-section, .time-section { width: 100%; border-right: none; }
       .date-section { border-bottom: 1px solid #e0e0e0; }
       .department-buttons { flex-direction: column; }
+      
+      /* Ensure modal is still centered on mobile */
+      #bookingModal .modal-dialog {
+        width: calc(100% - 1rem);
+        max-width: calc(100% - 1rem);
+      }
     }
