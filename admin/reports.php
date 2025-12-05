@@ -4,6 +4,7 @@ require_once '../config/database.php';
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+<<<<<<< HEAD
     header('Location: /finalproject/auth/login.php');
     exit;
 }
@@ -59,10 +60,60 @@ $stmt = $pdo->prepare("
            i.item_name as medicine,
            md.quantity,
            COALESCE(CONCAT(u.fname, ' ', u.lname), CONCAT(e.first_name, ' ', e.last_name), 'Unknown') as dispensed_by,
+=======
+    header('Location: ../login.php');
+    exit();
+}
+
+// Fetch patient statistics
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM patients");
+$totalPatients = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+$stmt = $pdo->query("SELECT COUNT(*) as new_patients FROM patients WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+$newPatients = $stmt->fetch(PDO::FETCH_ASSOC)['new_patients'];
+
+$stmt = $pdo->query("SELECT COUNT(*) as total_visits FROM visit_logs WHERE visit_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+$totalVisits = $stmt->fetch(PDO::FETCH_ASSOC)['total_visits'];
+
+// Fetch patient details with visit logs
+$stmt = $pdo->query("
+    SELECT p.sr_code, p.full_name, p.gender, 
+           v.purpose, v.visit_date as last_visit
+    FROM patients p
+    LEFT JOIN visit_logs v ON p.id = v.patient_id
+    WHERE v.id IN (
+        SELECT MAX(id) FROM visit_logs GROUP BY patient_id
+    )
+    ORDER BY v.visit_date DESC
+    LIMIT 10
+");
+$patientDetails = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch inventory data
+$stmt = $pdo->query("SELECT * FROM inventory WHERE status = 'active' ORDER BY name ASC");
+$inventoryItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch dispensed history
+$stmt = $pdo->query("
+    SELECT md.dispensed_date, 
+           p.full_name as patient_name,
+           i.name as medicine,
+           CONCAT(md.quantity, ' ', 
+                  CASE 
+                    WHEN i.name LIKE '%tablet%' THEN 'tablets'
+                    WHEN i.name LIKE '%capsule%' THEN 'capsules'
+                    WHEN i.name LIKE '%vial%' THEN 'vials'
+                    WHEN i.name LIKE '%dose%' THEN 'doses'
+                    ELSE 'units'
+                  END
+           ) as quantity,
+           CONCAT(e.first_name, ' ', e.last_name) as dispensed_by,
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
            md.purpose
     FROM medicine_dispensed md
     JOIN patients p ON md.patient_id = p.id
     JOIN inventory i ON md.inventory_id = i.id
+<<<<<<< HEAD
     LEFT JOIN employees e ON md.dispensed_by = e.id
     LEFT JOIN users u ON e.user_id = u.id
     WHERE DATE(md.dispensed_date) BETWEEN ? AND ?
@@ -290,6 +341,54 @@ try {
 ?>
 
 
+=======
+    JOIN employees e ON md.dispensed_by = e.id
+    ORDER BY md.dispensed_date DESC, md.dispensed_time DESC
+    LIMIT 10
+");
+$dispensedHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch stock entries
+$stmt = $pdo->query("
+    SELECT se.delivery_date, se.dr_number, se.supplier,
+           i.name as medicine, 
+           CONCAT(se.quantity, ' ', 
+                  CASE 
+                    WHEN i.name LIKE '%tablet%' THEN 'tablets'
+                    WHEN i.name LIKE '%capsule%' THEN 'capsules'
+                    WHEN i.name LIKE '%vial%' THEN 'vials'
+                    WHEN i.name LIKE '%dose%' THEN 'doses'
+                    ELSE 'units'
+                  END
+           ) as quantity,
+           se.unit_price, se.total_amount,
+           CONCAT(e.first_name, ' ', e.last_name) as received_by
+    FROM stock_entries se
+    JOIN inventory i ON se.inventory_id = i.id
+    JOIN employees e ON se.received_by = e.id
+    ORDER BY se.delivery_date DESC
+    LIMIT 10
+");
+$stockEntries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate dispensed totals
+$stmt = $pdo->query("SELECT COALESCE(SUM(quantity), 0) as total FROM medicine_dispensed");
+$totalDispensed = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+$stmt = $pdo->query("SELECT COALESCE(SUM(quantity), 0) as today FROM medicine_dispensed WHERE dispensed_date = CURDATE()");
+$todayDispensed = $stmt->fetch(PDO::FETCH_ASSOC)['today'];
+
+// Stock entry statistics
+$stmt = $pdo->query("SELECT COUNT(*) as count FROM stock_entries");
+$totalDeliveries = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+$stmt = $pdo->query("SELECT COALESCE(SUM(quantity), 0) as items FROM stock_entries");
+$itemsReceived = $stmt->fetch(PDO::FETCH_ASSOC)['items'];
+
+$stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM stock_entries");
+$totalValue = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+?>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -298,10 +397,15 @@ try {
   <title>Reports & Analytics</title>
 
   <!-- Stylesheets -->
+<<<<<<< HEAD
   <link href="../admin/css/reports.css" rel="stylesheet" />
   <link href="../admin/css/responsive.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet" />
   <link href="../admin/css/notifications.css" rel="stylesheet" />
+=======
+  <link href="../admin/reports.css" rel="stylesheet" />
+  <link href="../admin/nav.css" rel="stylesheet" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
@@ -310,6 +414,7 @@ try {
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<<<<<<< HEAD
   
   <!-- Print Stylesheet -->
   <style>
@@ -1322,6 +1427,8 @@ try {
       }
     }
   </style>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </head>
 
 <body>
@@ -1339,12 +1446,17 @@ try {
 
     <!-- Right-side icons -->
     <div class="header-icons">
+<<<<<<< HEAD
       <!-- Mobile Menu Icon -->
       <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
         <i class="bi bi-list"></i>
       </button>
       <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+=======
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon"><i class="bi bi-box-arrow-right"></i></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </div>
   </div>
 
@@ -1356,31 +1468,53 @@ try {
         <a href="../admin/patients.php" class="menu-item">Patient</a>
         <a href="../admin/userManagement.php" class="menu-item">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
+<<<<<<< HEAD
         <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item active">Reports & Analytics</a>
       </div>
       <div class="user-profile">
+=======
+        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
+        <a href="../admin/reports.php" class="menu-item active">Reports & Analytics</a>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <span><?php echo htmlspecialchars($userName); ?></span>
       </div>
     </div>
 
       <!-- MAIN DASHBOARD -->
+<<<<<<< HEAD
     <main class="dashboard-content" data-report-title="Reports" data-print-date="<?php echo date('Y-m-d H:i:s'); ?>">
       <h2 class="welcome-text">Reports</h2>
 
       <div class="mb-3">
         <button class="btn btn-light btn-sm" onclick="printCurrentTab()"><i class="bi bi-printer"></i> Print Current Tab</button>
+=======
+    <main class="dashboard-content">
+      <h2 class="welcome-text">Reports</h2>
+
+      <div class="mb-3">
+        <button class="btn btn-light btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        <button class="btn btn-secondary btn-sm"><i class="bi bi-file-pdf"></i> Export PDF</button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </div>
 
       <ul class="nav nav-tabs report-tabs" id="reportTabs">
         <li class="nav-item"><a class="nav-link active" data-target="patientsTab">Patients</a></li>
         <li class="nav-item"><a class="nav-link" data-target="inventoryTab">Inventory</a></li>
         <li class="nav-item"><a class="nav-link" data-target="dispensedTab">Dispensed</a></li>
+<<<<<<< HEAD
         <li class="nav-item"><a class="nav-link" data-target="analyticsTab">Analytics</a></li>
+=======
+        <li class="nav-item"><a class="nav-link" data-target="stockEntryTab">Stock Entry</a></li>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </ul>
 
       <!-- PATIENTS TAB -->
       <div id="patientsTab" class="tab-content active">
+<<<<<<< HEAD
         <div class="date-range-filters mb-3">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
@@ -1395,6 +1529,13 @@ try {
               <button type="button" class="btn btn-primary" onclick="applyDateRange()">Apply Filter</button>
             </div>
           </div>
+=======
+        <div class="time-filters">
+          <button class="btn btn-outline-secondary active" data-period="today">Today</button>
+          <button class="btn btn-outline-secondary" data-period="week">This week</button>
+          <button class="btn btn-outline-secondary" data-period="month">This month</button>
+          <button class="btn btn-outline-secondary" data-period="year">This year</button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <h5 class="mt-4">Patients Report</h5>
@@ -1406,19 +1547,42 @@ try {
           </div>
           <div class="stat-card">
             <h2 id="newPatients"><?php echo number_format($newPatients); ?></h2>
+<<<<<<< HEAD
             <p>New Patients (Last 30 Days)</p>
+=======
+            <p>New Patients</p>
+          </div>
+          <div class="stat-card">
+            <h2 id="totalVisits"><?php echo number_format($totalVisits); ?></h2>
+            <p>Total Visits</p>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           </div>
         </div>
 
         <div class="row mt-4">
+<<<<<<< HEAD
           <div class="col-md-6">
+=======
+          <div class="col-md-4">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <div class="chart-box">
               <h6>Patient Visits</h6>
               <canvas id="patientVisitsChart"></canvas>
             </div>
           </div>
 
+<<<<<<< HEAD
           <div class="col-md-6">
+=======
+          <div class="col-md-4">
+            <div class="chart-box">
+              <h6>Health Trends</h6>
+              <canvas id="healthTrendsChart"></canvas>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <div class="chart-box">
               <h6>Monthly Appointments Trend</h6>
               <select class="form-select form-select-sm chart-filter mb-2" id="yearFilter">
@@ -1438,8 +1602,14 @@ try {
               <tr>
                 <th>Patient ID</th>
                 <th>Name</th>
+<<<<<<< HEAD
                 <th>Course</th>
                 <th>Year Level</th>
+=======
+                <th>Gender</th>
+                <th>Purpose</th>
+                <th>Last Visit</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </tr>
             </thead>
             <tbody>
@@ -1447,8 +1617,14 @@ try {
               <tr>
                 <td><?php echo htmlspecialchars($patient['sr_code']); ?></td>
                 <td><?php echo htmlspecialchars($patient['full_name']); ?></td>
+<<<<<<< HEAD
                 <td><?php echo htmlspecialchars($patient['course'] ?? 'N/A'); ?></td>
                 <td><?php echo htmlspecialchars($patient['year_level'] ?? 'N/A'); ?></td>
+=======
+                <td><?php echo htmlspecialchars($patient['gender']); ?></td>
+                <td><?php echo htmlspecialchars($patient['purpose'] ?? 'N/A'); ?></td>
+                <td><?php echo $patient['last_visit'] ? date('Y-m-d', strtotime($patient['last_visit'])) : 'N/A'; ?></td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -1458,6 +1634,7 @@ try {
 
       <!-- INVENTORY TAB -->
       <div id="inventoryTab" class="tab-content">
+<<<<<<< HEAD
         <div class="date-range-filters mb-3">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
@@ -1472,10 +1649,18 @@ try {
               <button type="button" class="btn btn-primary" onclick="applyDateRange()">Apply Filter</button>
             </div>
           </div>
+=======
+        <div class="time-filters">
+          <button class="btn btn-outline-secondary active">Today</button>
+          <button class="btn btn-outline-secondary">This week</button>
+          <button class="btn btn-outline-secondary">This month</button>
+          <button class="btn btn-outline-secondary">This year</button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <h5 class="mt-4">Inventory Report</h5>
 
+<<<<<<< HEAD
         <div class="stats-row">
           <div class="stat-card">
             <h2><?php echo number_format($totalStockItems); ?></h2>
@@ -1487,6 +1672,8 @@ try {
           </div>
         </div>
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <div class="row mt-4">
           <div class="col-md-6">
             <div class="chart-box" style="height: 350px;">
@@ -1509,17 +1696,24 @@ try {
               <tr>
                 <th>Item Code</th>
                 <th>Item Name</th>
+<<<<<<< HEAD
                 <th>Batch Number</th>
                 <th>Total Quantity</th>
                 <th>Dispensed</th>
                 <th>Available</th>
                 <th>Expiry Date</th>
                 <th>Status</th>
+=======
+                <th>Quantity</th>
+                <th>Dispensed</th>
+                <th>Expiry Date</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </tr>
             </thead>
             <tbody>
               <?php foreach ($inventoryItems as $item): ?>
               <tr>
+<<<<<<< HEAD
                 <td><?php echo htmlspecialchars($item['item_code'] ?? 'N/A'); ?></td>
                 <td><?php echo htmlspecialchars($item['item_name'] ?? 'N/A'); ?></td>
                 <td><?php echo htmlspecialchars($item['batch_number'] ?? 'N/A'); ?></td>
@@ -1532,6 +1726,13 @@ try {
                     <?php echo htmlspecialchars(ucfirst($item['status'] ?? 'N/A')); ?>
                   </span>
                 </td>
+=======
+                <td><?php echo htmlspecialchars($item['code']); ?></td>
+                <td><?php echo htmlspecialchars($item['name']); ?></td>
+                <td><?php echo number_format($item['quantity']); ?></td>
+                <td><?php echo number_format($item['dispensed']); ?></td>
+                <td><?php echo date('Y-m-d', strtotime($item['expiry'])); ?></td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -1541,6 +1742,7 @@ try {
 
       <!-- DISPENSED TAB -->
       <div id="dispensedTab" class="tab-content">
+<<<<<<< HEAD
         <div class="date-range-filters mb-3">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
@@ -1555,6 +1757,13 @@ try {
               <button type="button" class="btn btn-primary" onclick="applyDateRange()">Apply Filter</button>
             </div>
           </div>
+=======
+        <div class="time-filters">
+          <button class="btn btn-outline-secondary active">Today</button>
+          <button class="btn btn-outline-secondary">This week</button>
+          <button class="btn btn-outline-secondary">This month</button>
+          <button class="btn btn-outline-secondary">This year</button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <h5 class="mt-4">Dispensed Medicine Report</h5>
@@ -1586,6 +1795,7 @@ try {
             <tbody>
               <?php foreach ($dispensedHistory as $record): ?>
               <tr>
+<<<<<<< HEAD
                 <td><?php 
                   $dispensedDateTime = $record['dispensed_date'];
                   if (!empty($record['dispensed_time'])) {
@@ -1596,6 +1806,12 @@ try {
                 <td><?php echo htmlspecialchars($record['patient_name']); ?></td>
                 <td><?php echo htmlspecialchars($record['medicine']); ?></td>
                 <td><?php echo number_format($record['quantity']); ?></td>
+=======
+                <td><?php echo date('Y-m-d', strtotime($record['dispensed_date'])); ?></td>
+                <td><?php echo htmlspecialchars($record['patient_name']); ?></td>
+                <td><?php echo htmlspecialchars($record['medicine']); ?></td>
+                <td><?php echo htmlspecialchars($record['quantity']); ?></td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <td><?php echo htmlspecialchars($record['dispensed_by']); ?></td>
                 <td><?php echo htmlspecialchars($record['purpose'] ?? 'N/A'); ?></td>
               </tr>
@@ -1605,6 +1821,7 @@ try {
         </div>
       </div>
 
+<<<<<<< HEAD
       <!-- ANALYTICS TAB -->
       <div id="analyticsTab" class="tab-content">
         <div class="date-range-filters mb-3">
@@ -1674,6 +1891,64 @@ try {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+=======
+      <!-- STOCK ENTRY TAB -->
+      <div id="stockEntryTab" class="tab-content">
+        <div class="time-filters">
+          <button class="btn btn-outline-secondary active">Today</button>
+          <button class="btn btn-outline-secondary">This week</button>
+          <button class="btn btn-outline-secondary">This month</button>
+          <button class="btn btn-outline-secondary">This year</button>
+        </div>
+
+        <h5 class="mt-4">Stock Entry Report</h5>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <h2><?php echo number_format($totalDeliveries); ?></h2>
+            <p>Total Deliveries</p>
+          </div>
+          <div class="stat-card">
+            <h2><?php echo number_format($itemsReceived); ?></h2>
+            <p>Items Received</p>
+          </div>
+          <div class="stat-card">
+            <h2>₱<?php echo number_format($totalValue, 2); ?></h2>
+            <p>Total Value</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <h6 class="mb-3">Stock Entry History</h6>
+          <table class="table table-bordered" id="stockEntryTable">
+            <thead class="table-light">
+              <tr>
+                <th>Delivery Date</th>
+                <th>DR Number</th>
+                <th>Supplier</th>
+                <th>Medicine</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total Amount</th>
+                <th>Received By</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($stockEntries as $entry): ?>
+              <tr>
+                <td><?php echo date('Y-m-d', strtotime($entry['delivery_date'])); ?></td>
+                <td><?php echo htmlspecialchars($entry['dr_number']); ?></td>
+                <td><?php echo htmlspecialchars($entry['supplier']); ?></td>
+                <td><?php echo htmlspecialchars($entry['medicine']); ?></td>
+                <td><?php echo htmlspecialchars($entry['quantity']); ?></td>
+                <td>₱<?php echo number_format($entry['unit_price'], 2); ?></td>
+                <td>₱<?php echo number_format($entry['total_amount'], 2); ?></td>
+                <td><?php echo htmlspecialchars($entry['received_by']); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
       </div>
     </main>
@@ -1681,6 +1956,7 @@ try {
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<<<<<<< HEAD
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/logout.js"></script>
   <script src="../admin/js/notifications.js"></script>
@@ -1971,28 +2247,62 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
 
     // Sync date inputs on page load
     syncDateInputs();
+=======
+  
+  <script>
+    // Tab switching
+    document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
+      tab.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelectorAll('#reportTabs .nav-link').forEach(link => link.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(this.getAttribute('data-target')).classList.add('active');
+      });
+    });
+
+    // Time filter buttons
+    document.querySelectorAll('.time-filters .btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        this.parentElement.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
     // Initialize DataTables
     $(document).ready(function() {
       $('#patientsTable').DataTable({ pageLength: 5 });
       $('#inventoryTable').DataTable({ pageLength: 5 });
       $('#dispensedTable').DataTable({ pageLength: 5 });
+<<<<<<< HEAD
       $('#analyticsTable').DataTable({ 
         pageLength: 10,
         order: [[0, 'desc']]
       });
+=======
+      $('#stockEntryTable').DataTable({ pageLength: 5 });
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     });
 
     // Patient Visits Chart (Bar)
     const patientVisitsCtx = document.getElementById('patientVisitsChart').getContext('2d');
+<<<<<<< HEAD
     const patientVisitsData = <?php echo json_encode($patientVisitsData); ?>;
     window.patientVisitsChart = new Chart(patientVisitsCtx, {
+=======
+    new Chart(patientVisitsCtx, {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       type: 'bar',
       data: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [{
           label: 'Visits',
+<<<<<<< HEAD
           data: patientVisitsData,
+=======
+          data: [12, 19, 15, 25, 22, 18, 20],
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           backgroundColor: '#6b0000',
           borderRadius: 5
         }]
@@ -2000,6 +2310,7 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+<<<<<<< HEAD
         layout: {
           padding: {
             top: 5,
@@ -2028,13 +2339,47 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
               color: 'rgba(0, 0, 0, 0.05)'
             }
           }
+=======
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 5 } }
+        }
+      }
+    });
+
+    // Health Trends Chart (Line)
+    const healthTrendsCtx = document.getElementById('healthTrendsChart').getContext('2d');
+    new Chart(healthTrendsCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Health Issues',
+          data: [30, 45, 35, 50, 40, 60],
+          borderColor: '#6b0000',
+          backgroundColor: 'rgba(107, 0, 0, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }
       }
     });
 
     // Monthly Appointments Trend (Line Chart)
     const lineChartCtx = document.getElementById('lineChart').getContext('2d');
+<<<<<<< HEAD
     window.lineChart = new Chart(lineChartCtx, {
+=======
+    new Chart(lineChartCtx, {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       type: 'line',
       data: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -2048,13 +2393,18 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
           pointBackgroundColor: '#6b0000',
           pointBorderColor: '#fff',
           pointBorderWidth: 2,
+<<<<<<< HEAD
           pointRadius: 3,
           pointHoverRadius: 5
+=======
+          pointRadius: 4
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+<<<<<<< HEAD
         layout: {
           padding: {
             top: 5,
@@ -2103,6 +2453,19 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
             },
             grid: {
               color: 'rgba(0, 0, 0, 0.05)'
+=======
+        plugins: { 
+          legend: { 
+            display: true,
+            position: 'top'
+          } 
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            ticks: {
+              stepSize: 20
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             }
           }
         }
@@ -2111,6 +2474,7 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
 
     // Medicine Usage Chart (Line)
     const medicineUsageCtx = document.getElementById('medicineUsageChart').getContext('2d');
+<<<<<<< HEAD
     const medicineUsageLabels = <?php echo json_encode($medicineUsageLabels); ?>;
     const medicineUsageData = <?php echo json_encode($medicineUsageData); ?>;
     window.medicineUsageChart = new Chart(medicineUsageCtx, {
@@ -2126,11 +2490,25 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
           fill: true,
           pointRadius: 3,
           pointHoverRadius: 5
+=======
+    new Chart(medicineUsageCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        datasets: [{
+          label: 'Medicines Dispensed',
+          data: [120, 150, 180, 160, 190, 210, 200, 230, 220, 250],
+          borderColor: '#6b0000',
+          backgroundColor: 'rgba(107, 0, 0, 0.1)',
+          tension: 0.4,
+          fill: true
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+<<<<<<< HEAD
         layout: {
           padding: {
             top: 5,
@@ -2168,12 +2546,18 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
               color: 'rgba(0, 0, 0, 0.05)'
             }
           }
+=======
+        plugins: { legend: { display: true, position: 'top' } },
+        scales: {
+          y: { beginAtZero: true }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }
       }
     });
 
     // Stock Distribution Chart (Pie)
     const stockDistributionCtx = document.getElementById('stockDistributionChart').getContext('2d');
+<<<<<<< HEAD
     const stockDistributionLabels = <?php echo json_encode($stockDistributionLabels); ?>;
     const stockDistributionData = <?php echo json_encode($stockDistributionData); ?>;
     const stockDistributionColors = <?php echo json_encode($stockDistributionColors); ?>;
@@ -2184,11 +2568,21 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
         datasets: [{
           data: stockDistributionData,
           backgroundColor: stockDistributionColors.slice(0, stockDistributionLabels.length)
+=======
+    new Chart(stockDistributionCtx, {
+      type: 'pie',
+      data: {
+        labels: ['PVRV', 'Tetanus Toxoid', 'Paracetamol', 'Amoxicillin', 'Others'],
+        datasets: [{
+          data: [70, 96, 200, 150, 180],
+          backgroundColor: ['#6b0000', '#dc3545', '#ffc107', '#28a745', '#17a2b8']
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+<<<<<<< HEAD
         layout: {
           padding: {
             top: 5,
@@ -2374,5 +2768,13 @@ document.querySelectorAll('#reportTabs .nav-link').forEach(tab => {
     
   </script>
   <script src="../js/mobile-menu.js"></script>
+=======
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  </script>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </body>
 </html>

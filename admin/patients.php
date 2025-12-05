@@ -1,6 +1,9 @@
 <?php
 require_once '../config/database.php';
+<<<<<<< HEAD
 require_once '../includes/patient_sync.php';
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 session_start();
 
 // Enable error reporting for debugging (remove in production)
@@ -28,12 +31,19 @@ $loggedInPhysician = [
 ];
 
 $pdo = getDB();
+<<<<<<< HEAD
 syncPatientRecords($pdo);
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
 // Fetch all patients with error handling
 $patients = [];
 try {
+<<<<<<< HEAD
     $stmt = $pdo->query("SELECT * FROM patients ORDER BY full_name ASC");
+=======
+    $stmt = $pdo->query("SELECT * FROM patients ORDER BY created_at DESC");
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     $patients = $stmt->fetchAll();
     error_log("Fetched " . count($patients) . " patients"); // Debug log
 } catch (PDOException $e) {
@@ -41,6 +51,7 @@ try {
     $patients = []; // Ensure it's an array even on error
 }
 
+<<<<<<< HEAD
 foreach ($patients as &$patient) {
     $patient['position'] = $patient['program'] ?? 'Student';
     $patient['phone'] = $patient['contact_number'] ?? null;
@@ -53,6 +64,12 @@ unset($patient);
 $medicines = [];
 try {
     $stmt = $pdo->query("SELECT id, batch_number, item_code, item_name, quantity, dispensed, expiry_date, description, status FROM inventory WHERE quantity > 0 AND status = 'active' ORDER BY item_name");
+=======
+// Fetch all medicines from inventory
+$medicines = [];
+try {
+    $stmt = $pdo->query("SELECT id, batchId, code, name, quantity, dispensed, expiry, description, status FROM inventory WHERE quantity > 0 AND status = 'active' ORDER BY name");
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     $medicines = $stmt->fetchAll();
     error_log("Fetched " . count($medicines) . " medicines"); // Debug log
 } catch (PDOException $e) {
@@ -93,10 +110,15 @@ function getInitials($name) {
   <title>Patients - Batangas State University</title>
 
   <!-- Stylesheets -->
+<<<<<<< HEAD
   <link href="../admin/css/patients.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="../admin/css/responsive.css" rel="stylesheet">
   <link href="../admin/css/notifications.css" rel="stylesheet">
+=======
+  <link href="../admin/patients.css" rel="stylesheet">
+  <link href="../admin/nav.css" rel="stylesheet">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
@@ -115,12 +137,17 @@ function getInitials($name) {
     </div>
 
     <div class="header-icons">
+<<<<<<< HEAD
       <!-- Mobile Menu Icon -->
       <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
         <i class="bi bi-list"></i>
       </button>
       <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+=======
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </div>
   </div>
 
@@ -132,10 +159,18 @@ function getInitials($name) {
         <a href="../admin/patients.php" class="menu-item active">Patients</a>
         <a href="../admin/userManagement.php" class="menu-item">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
+<<<<<<< HEAD
         <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
       <div class="user-profile">
+=======
+        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
+        <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <span><?php echo htmlspecialchars($user['fname'] . ' ' . $user['lname']); ?></span>
       </div>
     </div>
@@ -148,17 +183,39 @@ function getInitials($name) {
         <input type="text" class="form-control" id="searchPatients" placeholder="Search patients...">
       </div>
       
+<<<<<<< HEAD
+=======
+      <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients" type="button" role="tab">Patients</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#visitLogs" type="button" role="tab">Visit Logs</button>
+        </li>
+      </ul>
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       <div class="tab-content mt-3" id="dashboardTabsContent">
         <div class="tab-pane fade show active" id="patients" role="tabpanel">
           <div class="content-wrapper">
             <div class="patients-section" id="patientsSection">
               <div class="patients-header">
                 <h3>All Patients</h3>
+<<<<<<< HEAD
+=======
+                <button class="btn-add-patient" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+                  <i class="bi bi-plus-lg"></i> Add New Patient
+                </button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
 
               <div class="patients-list" id="patientsList">
                 <?php if (empty($patients)): ?>
+<<<<<<< HEAD
                   <p style="text-align: center; color: #999; padding: 40px;">No patients found.</p>
+=======
+                  <p style="text-align: center; color: #999; padding: 40px;">No patients found. Add a new patient to get started.</p>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <?php else: ?>
                   <?php foreach ($patients as $patient): ?>
                   <div class="patient-card" data-patient-id="<?php echo $patient['id']; ?>">
@@ -168,6 +225,10 @@ function getInitials($name) {
                     <div class="patient-info-compact">
                       <div class="patient-name"><?php echo htmlspecialchars($patient['full_name']); ?></div>
                       <div class="patient-meta">SR-Code: <?php echo htmlspecialchars($patient['sr_code']); ?></div>
+<<<<<<< HEAD
+=======
+                      <div class="patient-meta"><?php echo htmlspecialchars($patient['position']); ?></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     </div>
                     <i class="bi bi-chevron-right view-patient-btn"></i>
                   </div>
@@ -193,7 +254,11 @@ function getInitials($name) {
                 <div class="tabs-container">
                   <button class="tab-item active" onclick="switchTab('info')">Personal Information</button>
                   <button class="tab-item" onclick="switchTab('medical')">Medical Records</button>
+<<<<<<< HEAD
                   <button class="tab-item" onclick="switchTab('dental')">Dental Records</button>
+=======
+                  <button class="tab-item" onclick="switchTab('new-record')">New Medical Record</button>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
 
                 <div class="tab-content-inner active" id="infoTab">
@@ -202,33 +267,90 @@ function getInitials($name) {
 
                 <div class="tab-content-inner" id="medicalTab">
                   <div class="form-section">
+<<<<<<< HEAD
+=======
+                    <h4 class="section-title">Medical History</h4>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     <div id="medicalRecordsContainer">
                       <p style="text-align: center; color: #999; padding: 40px;">No medical records found.</p>
                     </div>
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 <div class="tab-content-inner" id="dentalTab">
                   <div class="form-section">
                     <div id="dentalRecordsContainer">
                       <p style="text-align: center; color: #999; padding: 40px;">No dental records found.</p>
                     </div>
                   </div>
+=======
+                <div class="tab-content-inner" id="newRecordTab">
+                  <?php include 'includes/newRecord.php'; ?>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
               </div>
             </div>
           </div>
         </div>
+<<<<<<< HEAD
+=======
+
+        <div class="tab-pane fade" id="visitLogs" role="tabpanel">
+          <div class="visit-logs-container">
+            <div class="visit-logs-header">
+              <h5>Visit Logs</h5>
+            </div>
+            <div class="table-responsive">
+              <table class="visit-logs-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Patient Name</th>
+                    <th>Purpose</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="visitLogsTableBody">
+                  <?php if (empty($visitLogs)): ?>
+                    <tr>
+                      <td colspan="5" style="text-align: center; color: #999; padding: 20px;">No visit logs found.</td>
+                    </tr>
+                  <?php else: ?>
+                    <?php foreach ($visitLogs as $index => $log): ?>
+                    <tr>
+                      <td><?php echo $index + 1; ?></td>
+                      <td><?php echo htmlspecialchars($log['patient_name']); ?></td>
+                      <td><?php echo htmlspecialchars($log['purpose']); ?></td>
+                      <td><?php echo htmlspecialchars($log['physician_name']); ?></td>
+                      <td><?php echo date('m/d/Y', strtotime($log['visit_date'])); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </div>
     </div>
   </div>
 
+<<<<<<< HEAD
   
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../js/logout.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="../admin/js/notifications.js"></script>
+=======
+  <!-- Add Patient Modal -->
+  <?php include './includes/addPatient.php'; ?>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 <script>
     // Initialize variables with fallbacks to prevent undefined errors
     let patientsData = [];
@@ -288,6 +410,7 @@ function getInitials($name) {
         // Alert user
         alert('Warning: Some data failed to load. The page may not function correctly. Error: ' + error.message);
     }
+<<<<<<< HEAD
 
     // Patient card click handler
     document.addEventListener('DOMContentLoaded', function() {
@@ -2013,5 +2136,9 @@ function loadPersonalInfo(patient) {
     }
 </style>
 <script src="../js/mobile-menu.js"></script>
+=======
+</script>
+<script src="../js/patients.js"></script>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </body>
 </html>

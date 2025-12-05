@@ -14,9 +14,12 @@
       flex: 1;
       padding: 2rem;
       background-color: #f8f9fa;
+<<<<<<< HEAD
       overflow-y: auto;
       overflow-x: hidden;
       min-height: 0;
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     }
 
     /* Stats */
@@ -29,7 +32,14 @@
       transition: all 0.3s ease;
     }
 
+<<<<<<< HEAD
    
+=======
+    .stat-card:hover {
+      transform: scale(1.05);
+      background-color: #fff2f2;
+    }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
     .stat-card h4 {
       color: #800000;
@@ -43,6 +53,7 @@
       margin: 5px 0 0;
     }
 
+<<<<<<< HEAD
     .category-toggle {
       display: flex;
       gap: 0.75rem;
@@ -73,6 +84,8 @@
       box-shadow: 0 4px 12px rgba(126, 20, 20, 0.3);
     }
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     /* Calendar */
     .calendar-container {
       background-color: #ffffff;
@@ -182,6 +195,7 @@
       color: #800000;
     }
 
+<<<<<<< HEAD
     .calendar-day.available {
       background-color: #e8f5e9;
       border-color: #4caf50;
@@ -206,6 +220,8 @@
       cursor: not-allowed;
     }
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     .calendar-day.has-appointment.today {
       background-color: #cc0000 !important;
       color: white;
@@ -278,6 +294,7 @@
       .appointments-right {
         min-width: 100%;
       }
+<<<<<<< HEAD
     }
 
     /* Add this CSS to the <style> section in student_dashboard.php */
@@ -319,3 +336,6 @@
     transform: scale(1);
   }
 }
+=======
+    }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9

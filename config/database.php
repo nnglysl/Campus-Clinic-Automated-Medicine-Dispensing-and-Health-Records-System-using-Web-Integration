@@ -1,4 +1,8 @@
 <?php
+<<<<<<< HEAD
+=======
+// Database Configuration - Matches your existing db.php
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 $host = 'localhost';
 $dbname = 'clinic_db';
 $username = 'root';
@@ -19,11 +23,19 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
+<<<<<<< HEAD
+=======
+// Helper function to get database connection
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function getDB() {
     global $pdo;
     return $pdo;
 }
 
+<<<<<<< HEAD
+=======
+// Sanitize input
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function sanitizeInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -31,6 +43,10 @@ function sanitizeInput($data) {
     return $data;
 }
 
+<<<<<<< HEAD
+=======
+// Check if user is logged in
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function checkAuth() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -42,6 +58,10 @@ function checkAuth() {
     return $_SESSION['user_id'];
 }
 
+<<<<<<< HEAD
+=======
+// Check if user is admin or doctor
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function checkAdminOrDoctor() {
     session_start();
     if (!isset($_SESSION['user_id'])) {

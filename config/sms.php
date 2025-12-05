@@ -1,5 +1,6 @@
 <?php
 function sendSms($phoneNumber, $message) {
+<<<<<<< HEAD
   if (!isset($_ENV['SMS_API_KEY'])) {
     if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
       require_once __DIR__ . '/../vendor/autoload.php';
@@ -16,6 +17,12 @@ function sendSms($phoneNumber, $message) {
     return ['success' => false, 'error' => 'SMS API key not configured'];
   }
   
+=======
+  $url = 'https://sms.skyio.site/api/sms/send';
+  $apiKey = 'Ls9HTrWtoOcN2cCCFEavCUfKER8bXty8P97XML0lfQxi2z89SZf8cwEqdatRcLjg'; // Replace with your actual API key
+  
+  // Format phone number (remove +63, keep 09 format or add +63)
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   $phoneNumber = preg_replace('/[^0-9+]/', '', $phoneNumber);
   if (strpos($phoneNumber, '09') === 0) {
     $phoneNumber = '+63' . substr($phoneNumber, 1);
@@ -50,6 +57,10 @@ function sendSms($phoneNumber, $message) {
   
   curl_close($curl);
   
+<<<<<<< HEAD
+=======
+  // Log for debugging (remove in production)
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   error_log("SMS API Response: " . $response);
   error_log("SMS API HTTP Code: " . $httpCode);
   
@@ -59,6 +70,10 @@ function sendSms($phoneNumber, $message) {
   
   $result = json_decode($response, true);
   
+<<<<<<< HEAD
+=======
+  // Check for successful response
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   if ($httpCode == 200 || $httpCode == 201) {
     return ['success' => true, 'response' => $result];
   }

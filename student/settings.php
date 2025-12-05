@@ -2,12 +2,20 @@
 require_once '../config/database.php';
 session_start();
 
+<<<<<<< HEAD
 // Redirect if not logged in
+=======
+// Enable error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
 
+<<<<<<< HEAD
 // ✅ Define user info safely
 $user_id = $_SESSION['user_id'];
 $first_name = $_SESSION['fname'] ?? 'Student';
@@ -25,6 +33,14 @@ if (!isset($_SESSION['role'])) {
 // Log session info for debugging
 error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'NOT SET'));
 error_log("User info: " . print_r($_SESSION, true));
+=======
+$user = [
+    'id' => $_SESSION['user_id'],
+    'fname' => $_SESSION['fname'] ?? 'Student',
+    'lname' => $_SESSION['lname'] ?? '',
+    'role' => $_SESSION['role'] ?? 'student'
+];
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
 $pdo = getDB();
 
@@ -32,12 +48,16 @@ $pdo = getDB();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     header('Content-Type: application/json');
     
+<<<<<<< HEAD
     // SECURITY: Explicitly ignore any role data that might be sent
     // Only accept password-related fields
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     $currentPassword = $_POST['current_password'] ?? '';
     $newPassword = $_POST['new_password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
     
+<<<<<<< HEAD
     // SECURITY: Log if role data is being sent (for debugging)
     if (isset($_POST['role'])) {
         error_log("WARNING: Role field detected in password change request for user_id: $user_id. Ignoring role data.");
@@ -49,6 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         $stmt->execute([$user_id]);
         $currentRole = $stmt->fetchColumn();
         
+=======
+    try {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         // Validate passwords match
         if ($newPassword !== $confirmPassword) {
             echo json_encode(['success' => false, 'message' => 'New passwords do not match.']);
@@ -63,7 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         
         // Verify current password
         $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
+<<<<<<< HEAD
         $stmt->execute([$user_id]);
+=======
+        $stmt->execute([$user['id']]);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         $userData = $stmt->fetch();
         
         if (!$userData || !password_verify($currentPassword, $userData['password'])) {
@@ -71,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             exit();
         }
         
+<<<<<<< HEAD
         // SECURITY: Update ONLY password and updated_at - explicitly exclude role
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?");
@@ -90,6 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             echo json_encode(['success' => false, 'message' => 'Security error detected. Please contact administrator.']);
             exit();
         }
+=======
+        // Update password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$hashedPassword, $user['id']]);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         
         echo json_encode(['success' => true, 'message' => 'Password changed successfully!']);
         exit();
@@ -109,25 +143,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <title>Settings - Student Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<<<<<<< HEAD
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="css/nav.css" rel="stylesheet" />
     <link rel="stylesheet" href="../student/css/settings.css">
     <link rel="stylesheet" href="../admin/css/notifications.css" />
     <link href="css/responsive.css" rel="stylesheet" />
+=======
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../employee/nav.css">
+    <link rel="stylesheet" href="../employee/settings.css">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </head>
 <body>
     <!-- HEADER -->
     <div class="header">
         <div class="logo-section">
             <div class="logo">
+<<<<<<< HEAD
                 <img src="../img/bsu-logo.png" alt="University Logo" loading="lazy" />
+=======
+                <img src="../img/bsu-logo.png" alt="University Logo" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             </div>
             <div class="university-name">
                 <h1>Batangas State</h1>
                 <h1>University</h1>
             </div>
         </div>
+<<<<<<< HEAD
   <div class="header-icons">
     <!-- ADD MOBILE MENU ICON FIRST -->
     <div class="mobile-menu-icon" id="mobileMenuBtn">
@@ -139,6 +184,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     </div>
   </div>
 </div>
+=======
+
+        <div class="header-icons">
+            <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+            <div class="logout-icon" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
+        </div>
+    </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
     <!-- Main Container -->
     <div class="main-container">
@@ -149,18 +202,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             <a href="../student/appointment.php" class="menu-item">Appointment</a>
             <a href="../student/records.php" class="menu-item">Health Records</a>
             <a href="../student/settings.php" class="menu-item active">Settings</a>
+<<<<<<< HEAD
 
             <div class="user-profile">
                 <div class="avatar"></div>
                 <span><?php echo htmlspecialchars($fullName); ?></span>
             </div>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <!-- Content Area -->
         <div class="content-area">
+<<<<<<< HEAD
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-12 col-md-10 col-lg-8 col-xl-6 mx-auto">
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <h2>Settings</h2>
 
             <!-- Change Password Section -->
@@ -195,19 +254,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                         <i class="fas fa-key me-2"></i> Change Password
                     </button>
                 </form>
+<<<<<<< HEAD
                     </div>
                     </div>
                 </div>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             </div>
         </div>
     </div>
 
+<<<<<<< HEAD
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/logout.js"></script>
     <script src="js/notifications.js"></script>
     <script>
         
+=======
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         // Password change functionality
         const passwordForm = document.getElementById('passwordForm');
         const passwordSuccessMessage = document.getElementById('passwordSuccessMessage');
@@ -236,14 +304,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             }
 
             // Send password change request via AJAX
+<<<<<<< HEAD
             // SECURITY: Only send password-related fields - explicitly exclude role
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             try {
                 const formData = new FormData();
                 formData.append('change_password', '1');
                 formData.append('current_password', currentPassword);
                 formData.append('new_password', newPassword);
                 formData.append('confirm_password', confirmPassword);
+<<<<<<< HEAD
                 // NOTE: Intentionally NOT sending role field - password update must not modify role
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
                 const response = await fetch('settings.php', {
                     method: 'POST',
@@ -263,8 +337,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                         title: 'Success!',
                         text: result.message,
                         timer: 2000,
+<<<<<<< HEAD
                         showConfirmButton: false,
                         confirmButtonColor: '#8b2332'
+=======
+                        showConfirmButton: false
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     });
 
                     setTimeout(() => {
@@ -278,8 +356,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
+<<<<<<< HEAD
                         text: result.message,
                         confirmButtonColor: '#8b2332'
+=======
+                        text: result.message
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     });
                 }
             } catch (error) {
@@ -290,6 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
+<<<<<<< HEAD
                     text: 'An error occurred. Please try again.',
                     confirmButtonColor: '#8b2332'
                 });
@@ -386,6 +469,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+=======
+                    text: 'An error occurred. Please try again.'
+                });
+            }
+        });
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </script>
 </body>
 </html>

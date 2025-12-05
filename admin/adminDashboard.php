@@ -28,6 +28,7 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'doctor'");
     $totalDoctors = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
+<<<<<<< HEAD
     // Get inventory statistics - count distinct medicines/items (all active items)
     $stmt = $pdo->query("SELECT COUNT(DISTINCT item_name) as count FROM inventory WHERE status = 'active' OR status IS NULL");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -48,15 +49,87 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM inventory WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND expiry_date >= CURDATE() AND status = 'active'");
     $expiring = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
+=======
+    // Get today's appointments list
+    $stmt = $pdo->query("
+        SELECT a.*, u.fname, u.lname, d.fname as doctor_fname, d.lname as doctor_lname
+        FROM appointments a 
+        JOIN users u ON a.patient_id = u.id 
+        LEFT JOIN users d ON a.doctor_id = d.id
+        WHERE DATE(a.appointment_date) = CURDATE() 
+        AND a.status != 'cancelled'
+        ORDER BY a.appointment_time ASC
+        LIMIT 5
+    ");
+    $todayAppointmentsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get inventory statistics
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM inventory");
+    $totalMedicines = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM inventory WHERE quantity <= reorder_level");
+    $lowStock = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM inventory WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND expiry_date >= CURDATE()");
+    $expiring = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    // Get recent activities
+    $stmt = $pdo->query("
+        SELECT 
+            'patient_registered' as type,
+            CONCAT(u.fname, ' ', u.lname) as name,
+            u.created_at as activity_time
+        FROM users u 
+        WHERE u.role = 'patient' 
+        UNION ALL
+        SELECT 
+            'appointment_scheduled' as type,
+            CONCAT(u.fname, ' ', u.lname, ' - ', a.appointment_type, ' Appointment') as name,
+            a.created_at as activity_time
+        FROM appointments a
+        JOIN users u ON a.patient_id = u.id
+        ORDER BY activity_time DESC
+        LIMIT 10
+    ");
+    $recentActivities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 } catch (PDOException $e) {
     error_log("Dashboard Error: " . $e->getMessage());
     $pendingAppointments = 0;
     $totalPatients = 0;
     $todayAppointments = 0;
     $totalDoctors = 0;
+<<<<<<< HEAD
     $totalMedicines = 0;
     $lowStock = 0;
     $expiring = 0;
+=======
+    $todayAppointmentsList = [];
+    $totalMedicines = 0;
+    $lowStock = 0;
+    $expiring = 0;
+    $recentActivities = [];
+}
+
+/**
+ * Format time relative to now
+ */
+function timeAgo($datetime) {
+    $now = new DateTime();
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+    
+    if ($diff->d > 0) {
+        return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
+    } elseif ($diff->h > 0) {
+        return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
+    } elseif ($diff->i > 0) {
+        return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
+    } else {
+        return 'Just now';
+    }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 }
 ?>
 <!DOCTYPE html>
@@ -67,10 +140,15 @@ try {
   <title>Dashboard - Batangas State University</title>
   
   <!-- Stylesheets -->
+<<<<<<< HEAD
   <link href="../admin/css/adminDashboard.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="../admin/css/notifications.css" rel="stylesheet">
   <link href="../admin/css/responsive.css" rel="stylesheet">
+=======
+  <link href="../admin/adminDashboard.css" rel="stylesheet">
+  <link href="../admin/nav.css" rel="stylesheet">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,7 +164,11 @@ try {
   <div class="header">
     <div class="logo-section">
       <div class="logo">
+<<<<<<< HEAD
         <img src="../img/bsu-logo.png" alt="University Logo" loading="lazy" />
+=======
+        <img src="../img/bsu-logo.png" alt="University Logo" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </div>
       <div class="university-name">
         <h1>Batangas State</h1>
@@ -94,6 +176,7 @@ try {
       </div>
     </div>
 
+<<<<<<< HEAD
     <div class="header-icons">
       <!-- Mobile Menu Icon -->
       <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
@@ -101,6 +184,14 @@ try {
       </button>
       <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+=======
+    <!-- Right-side icons -->
+    <div class="header-icons">
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" onclick="window.location.href='../logout.php'">
+        <i class="bi bi-box-arrow-right"></i>
+      </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </div>
   </div>
 
@@ -112,10 +203,18 @@ try {
         <a href="../admin/patients.php" class="menu-item">Patient</a>
         <a href="../admin/userManagement.php" class="menu-item">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
+<<<<<<< HEAD
         <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
       <div class="user-profile">
+=======
+        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
+        <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <span><?php echo htmlspecialchars($userName); ?></span>
       </div>
     </div>
@@ -156,6 +255,57 @@ try {
                 <div class="stat-value"><?php echo $totalDoctors; ?></div>
               </div>
             </div>
+<<<<<<< HEAD
+=======
+          </div>
+
+          <!-- Today's Appointments -->
+          <div class="appointments-list">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="m-0">
+                <i class="bi bi-calendar-check me-2"></i>Today's Appointments
+              </h5>
+              <a href="../admin/appointmentManagement.php" class="see-more-btn">See More</a>
+            </div>
+
+            <div id="appointmentsList">
+              <?php if (empty($todayAppointmentsList)): ?>
+                <div class="text-center text-muted py-4">
+                  <i class="bi bi-calendar-x" style="font-size: 2rem;"></i>
+                  <p class="mt-2">No appointments scheduled for today</p>
+                </div>
+              <?php else: ?>
+                <?php foreach ($todayAppointmentsList as $apt): ?>
+                  <div class="appointment-item">
+                    <div class="appointment-info">
+                      <p class="appointment-name">
+                        <?php echo htmlspecialchars($apt['fname'] . ' ' . $apt['lname']); ?>
+                      </p>
+                      <div class="appointment-details">
+                        <span>
+                          <i class="bi bi-clock"></i> 
+                          <?php echo date('g:i A', strtotime($apt['appointment_time'])); ?>
+                        </span>
+                        <?php if (!empty($apt['doctor_fname'])): ?>
+                          <span>
+                            <i class="bi bi-person"></i> 
+                            Dr. <?php echo htmlspecialchars($apt['doctor_lname']); ?>
+                          </span>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+                    <span class="appointment-type type-<?php echo $apt['appointment_type']; ?>">
+                      <?php echo ucfirst($apt['appointment_type']); ?>
+                    </span>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <!-- 3 Inventory Stats Row -->
+          <div class="stats-row">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <div class="stat-card">
               <i class="bi bi-box-seam stat-icon text-primary"></i>
               <div>
@@ -163,6 +313,7 @@ try {
                 <div class="stat-value"><?php echo $totalMedicines; ?></div>
               </div>
             </div>
+<<<<<<< HEAD
           </div>
 
           <!-- Alert Sections Row -->
@@ -183,6 +334,20 @@ try {
                   <h5>Nearing Expiration Alert</h5>
                 </div>
                 <div id="expiredCards" class="alert-cards-container"></div>
+=======
+            <div class="stat-card">
+              <i class="bi bi-exclamation-triangle stat-icon text-warning"></i>
+              <div>
+                <div class="stat-title">Low Stock</div>
+                <div class="stat-value"><?php echo $lowStock; ?></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="bi bi-x-circle stat-icon text-danger"></i>
+              <div>
+                <div class="stat-title">Expiring</div>
+                <div class="stat-value"><?php echo $expiring; ?></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
           </div>
@@ -195,10 +360,17 @@ try {
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 id="currentMonth" class="m-0">November 2025</h5>
               <div>
+<<<<<<< HEAD
                 <button class="btn btn-outline-secondary btn-sm me-2" id="prevMonth" aria-label="Previous month">
                   <i class="bi bi-chevron-left"></i>
                 </button>
                 <button class="btn btn-outline-secondary btn-sm" id="nextMonth" aria-label="Next month">
+=======
+                <button class="btn btn-outline-secondary btn-sm me-2" id="prevMonth">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" id="nextMonth">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </div>
@@ -206,6 +378,7 @@ try {
             <div class="calendar-grid" id="calendar"></div>
           </div>
 
+<<<<<<< HEAD
           <!-- Appointments List -->
           <div class="appointments-card">
             <div class="appointments-header">
@@ -219,6 +392,47 @@ try {
               <div class="no-selection-message">
                 <p>Select a date on the calendar to view appointments.</p>
               </div>
+=======
+          <!-- Recent Activity -->
+          <div class="activity-card">
+            <div class="activity-header">
+              <h4>Recent Activity</h4>
+              <a href="#" class="view-all">View All</a>
+            </div>
+
+            <div class="activity-list">
+              <?php if (empty($recentActivities)): ?>
+                <div class="text-center text-muted py-4">
+                  <i class="bi bi-activity" style="font-size: 2rem;"></i>
+                  <p class="mt-2">No recent activities</p>
+                </div>
+              <?php else: ?>
+                <?php foreach (array_slice($recentActivities, 0, 3) as $activity): ?>
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <?php if ($activity['type'] === 'patient_registered'): ?>
+                        <i class="bi bi-person-plus"></i>
+                      <?php else: ?>
+                        <i class="bi bi-calendar"></i>
+                      <?php endif; ?>
+                    </div>
+                    <div class="activity-content">
+                      <h6>
+                        <?php 
+                          echo $activity['type'] === 'patient_registered' 
+                            ? 'New Patient Registered' 
+                            : 'Appointment Scheduled'; 
+                        ?>
+                      </h6>
+                      <p><?php echo htmlspecialchars($activity['name']); ?></p>
+                      <span class="activity-time">
+                        <?php echo timeAgo($activity['activity_time']); ?>
+                      </span>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             </div>
           </div>
         </div>
@@ -227,6 +441,7 @@ try {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/logout.js"></script>
   <script src="../admin/js/notifications.js"></script>
@@ -327,6 +542,33 @@ try {
 
       calendar.innerHTML = '';
 
+=======
+  <script>
+    // Calendar functionality
+    const calendar = document.getElementById('calendar');
+    const currentMonthEl = document.getElementById('currentMonth');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+
+    let currentDate = new Date();
+    const today = new Date();
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      currentMonthEl.textContent = new Date(year, month).toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      calendar.innerHTML = '';
+
+      // Day headers
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
         const header = document.createElement('div');
         header.className = 'calendar-day-header';
@@ -334,12 +576,17 @@ try {
         calendar.appendChild(header);
       });
 
+<<<<<<< HEAD
+=======
+      // Empty cells
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement('div');
         empty.className = 'calendar-day empty';
         calendar.appendChild(empty);
       }
 
+<<<<<<< HEAD
       for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(year, monthIndex, day);
         const dateIso = formatDate(dateObj);
@@ -472,15 +719,40 @@ try {
         calendar.classList.remove('is-loading');
         isLoadingCalendar = false;
       }
+=======
+      // Days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayEl = document.createElement('div');
+        const dayDate = new Date(year, month, day);
+        
+        dayEl.className = 'calendar-day';
+        dayEl.textContent = day;
+
+        if (dayDate.toDateString() === today.toDateString()) {
+          dayEl.classList.add('today');
+        } else if (dayDate < today) {
+          dayEl.classList.add('past');
+        } else {
+          dayEl.classList.add('future');
+        }
+
+        calendar.appendChild(dayEl);
+      }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     }
 
     prevMonthBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
+<<<<<<< HEAD
       loadCalendarData();
+=======
+      renderCalendar();
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     });
 
     nextMonthBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() + 1);
+<<<<<<< HEAD
       loadCalendarData();
     });
 
@@ -655,5 +927,125 @@ document.addEventListener('DOMContentLoaded', () => {
   </script>
 
   
+=======
+      renderCalendar();
+    });
+
+    renderCalendar();
+
+    // Auto-refresh appointments every 5 minutes
+    setInterval(() => {
+      location.reload();
+    }, 300000);
+  </script>
+
+  <style>
+    .appointment-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #6b0d00;
+    }
+
+    .appointment-info {
+      flex: 1;
+    }
+
+    .appointment-name {
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+
+    .appointment-details {
+      display: flex;
+      gap: 15px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .appointment-details span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .appointment-type {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .type-medical {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .type-dental {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .see-more-btn {
+      color: #6b0d00;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .see-more-btn:hover {
+      text-decoration: underline;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      background: #f0f0f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b0d00;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .activity-content h6 {
+      margin: 0 0 5px 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .activity-content p {
+      margin: 0 0 5px 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .activity-time {
+      font-size: 0.8rem;
+      color: #999;
+    }
+  </style>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </body>
 </html>

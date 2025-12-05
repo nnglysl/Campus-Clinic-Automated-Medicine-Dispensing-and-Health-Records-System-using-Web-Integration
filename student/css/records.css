@@ -1,19 +1,37 @@
   body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+<<<<<<< HEAD
       background-color: #ffffff;
+=======
+      background-color: #f8f9fa;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       margin: 0;
       padding: 0;
     }
 
+<<<<<<< HEAD
      .content-demo {
       flex: 1;
       padding: 40px 40px 20px 40px;
       color: #000000;
       background-color: #ffffff;
+=======
+    /* ============================
+       MY HEALTH RECORDS PAGE
+       ============================ */
+
+    /* Page Background + Layout */
+    .content-demo {
+      flex: 1;
+      padding: 40px;
+      background-color: #dddddd;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       height: calc(100vh - 100px);
       overflow: hidden;
     }
 
+<<<<<<< HEAD
     /* Allow scrolling on mobile/responsive view */
     @media (max-width: 991px) {
       body {
@@ -48,6 +66,11 @@
     /* Page Title and Button */
     .content-demo h2 {
       color: #000000;
+=======
+    /* Page Title and Button */
+    .content-demo h2 {
+      color: #800000;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       font-weight: 700;
     }
 
@@ -90,6 +113,7 @@
       position: relative;
     }
 
+<<<<<<< HEAD
     /* Allow scrolling on mobile/responsive view */
     @media (max-width: 991px) {
       .record-view-wrapper {
@@ -99,6 +123,8 @@
       }
     }
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     /* Back Button Bar (sticky) */
     .back-button-container {
       background-color: #dddddd;
@@ -251,6 +277,7 @@
     }
     .card:hover {
       transform: translateY(-3px);
+<<<<<<< HEAD
     }
 
     /* ============================
@@ -544,4 +571,6 @@
       .content-demo .consultation-section-title {
         font-size: 14px;
       }
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     }

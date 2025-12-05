@@ -64,8 +64,11 @@ function getPatient($pdo) {
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($patient) {
+<<<<<<< HEAD
         // Remove civil_status from patient data as it's not used in patient records
         unset($patient['civil_status']);
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         echo json_encode(['success' => true, 'patient' => $patient]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Patient not found']);
@@ -136,7 +139,11 @@ function addPatient($pdo) {
     }
 }
 
+<<<<<<< HEAD
 // Get patient medical records - Unified function combining all record types
+=======
+// Get patient medical records
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function getMedicalRecords($pdo) {
     $patientId = intval($_GET['patient_id'] ?? 0);
     
@@ -145,6 +152,7 @@ function getMedicalRecords($pdo) {
         return;
     }
     
+<<<<<<< HEAD
     $records = [];
     
     // 1. Get Medical Records from medical_records table
@@ -159,21 +167,48 @@ function getMedicalRecords($pdo) {
         FROM medical_records mr 
         LEFT JOIN employees e ON mr.employee_id = e.id 
             LEFT JOIN users ue ON e.user_id = ue.id
+=======
+    // FIXED: Join with employees table instead of users table
+    // since medical_records.employee_id references employees table
+    $stmt = $pdo->prepare("
+        SELECT 
+            mr.*,
+            COALESCE(e.first_name, u.fname) as fname,
+            COALESCE(e.last_name, u.lname) as lname
+        FROM medical_records mr 
+        LEFT JOIN employees e ON mr.employee_id = e.id 
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         LEFT JOIN users u ON mr.employee_id = u.id
         WHERE mr.patient_id = ? 
         ORDER BY mr.visit_date DESC, mr.visit_time DESC
     ");
     $stmt->execute([$patientId]);
+<<<<<<< HEAD
     
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         // Medicines are now stored in medicine_dispensed table, not prescriptions
         // Prescriptions table has been removed - set empty array for backward compatibility
         $prescriptions = [];
+=======
+    $records = [];
+    
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        // Get prescriptions for this record
+        $prescStmt = $pdo->prepare("
+            SELECT p.*, i.name as medicine_name, i.batchId as batch_id 
+            FROM prescriptions p 
+            JOIN inventory i ON p.inventory_id = i.id 
+            WHERE p.medical_record_id = ?
+        ");
+        $prescStmt->execute([$row['id']]);
+        $prescriptions = $prescStmt->fetchAll(PDO::FETCH_ASSOC);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         
         // Build physician name
         $physicianName = 'Dr. ' . ($row['fname'] ?? 'Unknown') . ' ' . ($row['lname'] ?? '');
         $row['physician_name'] = $physicianName;
         $row['prescriptions'] = $prescriptions;
+<<<<<<< HEAD
             $row['record_id'] = $row['id'];
             $records[] = $row;
         }
@@ -309,6 +344,10 @@ function getMedicalRecords($pdo) {
         
         return $dateB <=> $dateA; // Descending date
     });
+=======
+        $records[] = $row;
+    }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     
     echo json_encode(['success' => true, 'records' => $records]);
 }
@@ -390,9 +429,18 @@ function addMedicalRecord($pdo, $user) {
                 throw new Exception("Insufficient medicine stock. Available: " . $available);
             }
             
+<<<<<<< HEAD
             // Note: Prescriptions table removed - medicines are now stored in medicine_dispensed table
             // This code is kept for backward compatibility but no longer inserts to prescriptions
             // Medicines should be saved via save_consultation.php which uses medicine_dispensed table
+=======
+            // Insert prescription
+            $prescStmt = $pdo->prepare("
+                INSERT INTO prescriptions (medical_record_id, inventory_id, quantity, dosage_instructions) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $prescStmt->execute([$medicalRecordId, $inventoryId, $quantity, $dosage]);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             
             // Update medicine inventory - only update dispensed count
             $updateStmt = $pdo->prepare("

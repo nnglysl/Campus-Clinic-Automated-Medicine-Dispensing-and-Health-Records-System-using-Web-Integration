@@ -2,6 +2,7 @@
 include('../db.php');
 session_start();
 
+<<<<<<< HEAD
 if (!isset($pdo)) {
     die("Database connection failed. Please check your database configuration.");
 }
@@ -9,11 +10,18 @@ if (!isset($pdo)) {
 $error_message = '';
 $success_message = '';
 
+=======
+$error_message = '';
+$success_message = '';
+
+// Handle signup form submission
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 if (isset($_POST['signup'])) {
     $fname = trim($_POST['fname']);
     $lname = trim($_POST['lname']);
     $email = trim($_POST['email']);
     $phone = trim($_POST['phone']);
+<<<<<<< HEAD
     $phone = preg_replace('/[^\d+]/', '', $phone);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
@@ -84,6 +92,38 @@ if (isset($_POST['signup'])) {
                     $pdo->rollBack();
                 }
                 error_log("Signup error: " . $e->getMessage());
+=======
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    // Basic validation
+    if (empty($fname) || empty($lname) || empty($email) || empty($phone) || empty($password)) {
+        $error_message = 'Please fill in all fields.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = 'Invalid email address.';
+    } elseif (!preg_match('/^(09|\+639)\d{9}$/', $phone)) {
+        $error_message = 'Invalid phone number format. Use 09XXXXXXXXX or +639XXXXXXXXX';
+    } elseif (strlen($password) < 8) {
+        $error_message = 'Password must be at least 8 characters.';
+    } elseif ($password !== $confirm_password) {
+        $error_message = 'Passwords do not match.';
+    } else {
+        // Check if email or phone already exists
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR phone = ?");
+        $stmt->execute([$email, $phone]);
+        
+        if ($stmt->fetch()) {
+            $error_message = 'Email or phone number already registered.';
+        } else {
+            // Create user account
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO users (fname, lname, email, phone, password) VALUES (?, ?, ?, ?, ?)");
+            
+            if ($stmt->execute([$fname, $lname, $email, $phone, $hashed_password])) {
+                $success_message = 'Account created successfully! Redirecting to login...';
+                header('refresh:2;url=login.php');
+            } else {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 $error_message = 'Registration failed. Please try again.';
             }
         }
@@ -95,6 +135,7 @@ if (isset($_POST['signup'])) {
 <head>
     <title>BSU Clinic System - Sign Up</title>
     <?php include('header.php'); ?>
+<<<<<<< HEAD
     <link href="responsive.css" rel="stylesheet">
     
     <style>
@@ -198,6 +239,8 @@ if (isset($_POST['signup'])) {
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
         }
     </style>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </head>
 
 <body>
@@ -215,9 +258,14 @@ if (isset($_POST['signup'])) {
                 <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
             <?php endif; ?>
 
+<<<<<<< HEAD
             <form method="POST" id="signupForm">
                 <input type="hidden" name="role" value="patient" id="hiddenRole">
 
+=======
+            <!-- Regular Signup Form -->
+            <form method="POST">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <div class="form-group">
                     <input type="text" name="fname" class="form-input" placeholder="First Name" 
                            value="<?= isset($_POST['fname']) ? htmlspecialchars($_POST['fname']) : '' ?>" required>
@@ -229,11 +277,16 @@ if (isset($_POST['signup'])) {
                 </div>
                 
                 <div class="form-group">
+<<<<<<< HEAD
                     <input type="email" name="email" id="emailInput" class="form-input" placeholder="Email (XX-XXXXX@g.batstate-u.edu.ph)" 
                            value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>" required>
                     <div class="email-hint" id="emailHint">
                         
                     </div>
+=======
+                    <input type="email" name="email" class="form-input" placeholder="Email" 
+                           value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>" required>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
                 
                 <div class="form-group">
@@ -242,6 +295,7 @@ if (isset($_POST['signup'])) {
                     <span class="input-icon"><i class="bi bi-phone-fill"></i></span>
                 </div>
                
+<<<<<<< HEAD
                 <div class="form-group password-wrapper">
                     <input type="password" name="password" id="passwordInput" class="form-input" placeholder="Password (min. 8 characters)" required minlength="8">
                     <i class="bi bi-eye-fill password-toggle-icon" id="togglePassword" onclick="togglePasswordVisibility('passwordInput', 'togglePassword')"></i>
@@ -250,6 +304,16 @@ if (isset($_POST['signup'])) {
                 <div class="form-group password-wrapper">
                     <input type="password" name="confirm_password" id="confirmPasswordInput" class="form-input" placeholder="Confirm Password" required minlength="8">
                     <i class="bi bi-eye-fill password-toggle-icon" id="toggleConfirmPassword" onclick="togglePasswordVisibility('confirmPasswordInput', 'toggleConfirmPassword')"></i>
+=======
+                <div class="form-group">
+                    <input type="password" name="password" class="form-input" placeholder="Password" required>
+                    <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                </div>
+
+                <div class="form-group">
+                    <input type="password" name="confirm_password" class="form-input" placeholder="Confirm Password" required>
+                    <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
 
                 <button type="submit" name="signup" class="signup-button">Sign Up</button>
@@ -260,6 +324,7 @@ if (isset($_POST['signup'])) {
             </form>
         </div>
     </div>
+<<<<<<< HEAD
 
     <script>
         function togglePasswordVisibility(inputId, iconId) {
@@ -421,3 +486,7 @@ if (isset($_POST['signup'])) {
     </script>
 </body>
 </html>
+=======
+</body>
+</html>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9

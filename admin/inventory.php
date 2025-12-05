@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../db.php';
+<<<<<<< HEAD
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
@@ -543,12 +544,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (ob_get_level()) {
         ob_end_clean();
     }
+=======
+
+// Handle AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     
     $action = $_POST['action'];
     
     try {
         switch($action) {
             case 'getMedicines':
+<<<<<<< HEAD
                 // Automatically archive any expired items that are still marked as active
                 // This ensures expired items are moved to archive even if they weren't updated
                 $archiveStmt = $pdo->prepare("
@@ -1002,20 +1010,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     
                     $newCode = 'MED' . str_pad($num, 3, '0', STR_PAD_LEFT);
                     echo json_encode(['success' => true, 'item_code' => $newCode, 'exists' => false]);
+=======
+                $stmt = $pdo->query("SELECT * FROM inventory ORDER BY batchId ASC");
+                echo json_encode(['success' => true, 'data' => $stmt->fetchAll()]);
+                break;
+                
+            case 'addMedicine':
+                $batchId = $_POST['batchId'];
+                $code = $_POST['code'];
+                $name = $_POST['name'];
+                $quantity = $_POST['quantity'];
+                $expiry = $_POST['expiry'];
+                $description = $_POST['description'];
+                
+                $stmt = $pdo->prepare("INSERT INTO inventory (batchId, code, name, quantity, dispensed, expiry, description, status) VALUES (?, ?, ?, ?, 0, ?, ?, 'active')");
+                $stmt->execute([$batchId, $code, $name, $quantity, $expiry, $description]);
+                
+                echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+                break;
+                
+            case 'updateMedicine':
+                $id = $_POST['id'];
+                $name = $_POST['name'];
+                $quantity = $_POST['quantity'];
+                $expiry = $_POST['expiry'];
+                $description = $_POST['description'];
+                
+                $stmt = $pdo->prepare("UPDATE inventory SET name = ?, quantity = ?, expiry = ?, description = ? WHERE id = ?");
+                $stmt->execute([$name, $quantity, $expiry, $description, $id]);
+                
+                echo json_encode(['success' => true]);
+                break;
+                
+            case 'getNextBatchId':
+                $stmt = $pdo->query("SELECT MAX(CAST(SUBSTRING(batchId, 6) AS UNSIGNED)) as maxBatch FROM inventory");
+                $result = $stmt->fetch();
+                $nextNum = ($result['maxBatch'] ?? 0) + 1;
+                echo json_encode(['success' => true, 'batchId' => 'BATCH' . str_pad($nextNum, 3, '0', STR_PAD_LEFT)]);
+                break;
+                
+            case 'getItemCode':
+                $name = $_POST['name'];
+                $stmt = $pdo->prepare("SELECT code FROM inventory WHERE name = ? LIMIT 1");
+                $stmt->execute([$name]);
+                $result = $stmt->fetch();
+                
+                if ($result) {
+                    echo json_encode(['success' => true, 'code' => $result['code']]);
+                } else {
+                    $stmt = $pdo->query("SELECT MAX(CAST(SUBSTRING(code, 4) AS UNSIGNED)) as maxCode FROM inventory");
+                    $result = $stmt->fetch();
+                    $nextNum = ($result['maxCode'] ?? 0) + 1;
+                    echo json_encode(['success' => true, 'code' => 'MED' . str_pad($nextNum, 3, '0', STR_PAD_LEFT)]);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 }
                 break;
 
             case 'archiveExpired':
+<<<<<<< HEAD
                 $stmt = $pdo->prepare("
                     UPDATE inventory 
                     SET status = 'archive' 
                     WHERE expiry_date < CURDATE() 
                     AND status = 'active'
                 ");
+=======
+                $stmt = $pdo->prepare("UPDATE inventory SET status = 'archive' WHERE expiry < CURDATE() AND status != 'archive'");
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 $stmt->execute();
                 echo json_encode(['success' => true, 'affected' => $stmt->rowCount()]);
                 break;
                 
+<<<<<<< HEAD
             case 'checkAlerts':
                 // Check alerts without forcing (only send if not sent today per item)
                 // This allows dashboard updates without triggering duplicate alerts
@@ -1023,6 +1089,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 echo json_encode(['success' => true, 'alerts_sent' => $alertsSent]);
                 break;
                 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             default:
                 echo json_encode(['success' => false, 'error' => 'Invalid action']);
         }
@@ -1031,9 +1099,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
     exit;
 }
+<<<<<<< HEAD
 
 // Don't run automatic alert check on page load - it blocks rendering
 // Instead, run it asynchronously via AJAX after page loads
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -1043,14 +1114,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <title>Inventory</title>
 
   <!-- Stylesheets -->
+<<<<<<< HEAD
   <link href="../admin/css/inventory.css" rel="stylesheet" />
   <link href="../admin/css/responsive.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet" />
   <link href="../admin/css/notifications.css" rel="stylesheet" />
+=======
+  <link href="../admin/inventory.css" rel="stylesheet" />
+  <link href="../admin/nav.css" rel="stylesheet" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<<<<<<< HEAD
   
   <style>
     /* Autocomplete Dropdown Styles */
@@ -1164,6 +1241,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       display: block !important;
     }
   </style>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </head>
 
 <body>
@@ -1171,7 +1250,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <div class="header">
     <div class="logo-section">
       <div class="logo">
+<<<<<<< HEAD
         <img src="../img/bsu-logo.png" alt="University Logo" loading="lazy" />
+=======
+        <img src="../img/bsu-logo.png" alt="University Logo" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </div>
       <div class="university-name">
         <h1>Batangas State</h1>
@@ -1179,12 +1262,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       </div>
     </div>
     <div class="header-icons">
+<<<<<<< HEAD
       <!-- Mobile Menu Icon -->
       <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
         <i class="bi bi-list"></i>
       </button>
       <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+=======
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon"><i class="bi bi-box-arrow-right"></i></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </div>
   </div>
 
@@ -1204,14 +1292,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <a href="#" class="submenu-item" id="stockTab">Stocks</a>
           </div>
         </div>
+<<<<<<< HEAD
         <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
      <div class="user-profile">
+=======
+
+        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
+        <a href="../admin/reports.html" class="menu-item">Reports & Analytics</a>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <span><?php echo htmlspecialchars($userName); ?></span>
       </div>
     </div>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     <div class="main-content">
       <!-- Inventory Overview -->
       <div id="inventoryOverviewSection">
@@ -1238,7 +1339,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           </div>
         </div>
 
+<<<<<<< HEAD
         <div id="detailedTablesSection" class="mt-4">
+=======
+        <div class="mt-4">
+          <button class="btn btn-outline-secondary" id="toggleDetailedView">
+            <i class="bi bi-table"></i> View Detailed Tables
+          </button>
+        </div>
+
+        <div id="detailedTablesSection" style="display:none;" class="mt-4">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
               <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#lowstockDashboard">Low Stock Items</button>
@@ -1254,7 +1365,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <table id="lowStockDashboardTable" class="display table table-bordered table-striped">
                   <thead>
                     <tr>
+<<<<<<< HEAD
                       <th>Batch Number</th>
+=======
+                      <th>Batch ID</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                       <th>Item Code</th>
                       <th>Item Name</th>
                       <th>Quantity</th>
@@ -1273,7 +1388,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <table id="expiredDashboardTable" class="display table table-bordered table-striped">
                   <thead>
                     <tr>
+<<<<<<< HEAD
                       <th>Batch Number</th>
+=======
+                      <th>Batch ID</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                       <th>Item Code</th>
                       <th>Item Name</th>
                       <th>Quantity</th>
@@ -1297,7 +1416,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <div class="mb-3">
           <label for="sortBy" class="form-label me-2">Sort by:</label>
           <select id="sortBy" class="form-select d-inline-block" style="width: auto;">
+<<<<<<< HEAD
             <option value="batch">Batch Number</option>
+=======
+            <option value="batch">Batch ID</option>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <option value="code">Item Code</option>
             <option value="name">Item Name</option>
             <option value="quantity">Quantity</option>
@@ -1309,6 +1432,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#active">Active</button>
           </li>
           <li class="nav-item">
+<<<<<<< HEAD
+=======
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#bod">BOD</button>
+          </li>
+          <li class="nav-item">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#archive">Archive/Disposal</button>
           </li>
         </ul>
@@ -1317,7 +1446,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <table id="activeTable" class="display table table-bordered table-striped">
               <thead>
                 <tr>
+<<<<<<< HEAD
                   <th>Batch Number</th>
+=======
+                  <th>Batch ID</th>
+                  <th>Item Code</th>
+                  <th>Item Name</th>
+                  <th>Quantity</th>
+                  <th>Dispensed</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="tab-pane fade" id="bod">
+            <table id="bodTable" class="display table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>Batch ID</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <th>Item Code</th>
                   <th>Item Name</th>
                   <th>Quantity</th>
@@ -1334,7 +1484,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <table id="archiveTable" class="display table table-bordered table-striped">
               <thead>
                 <tr>
+<<<<<<< HEAD
                   <th>Batch Number</th>
+=======
+                  <th>Batch ID</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <th>Item Code</th>
                   <th>Item Name</th>
                   <th>Quantity</th>
@@ -1360,6 +1514,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <table id="stocksTable" class="display table table-bordered table-striped">
             <thead>
               <tr>
+<<<<<<< HEAD
                 <th>Batch Number</th>
                 <th>Item Code</th>
                 <th>Item Name</th>
@@ -1368,6 +1523,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <th>Expiry Date</th>
                 <th>Status</th>
                 <th>Dispensed</th>
+=======
+                <th>Batch ID</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <th>Action</th>
               </tr>
             </thead>
@@ -1382,7 +1545,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <div class="modal fade" id="addStockModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
+<<<<<<< HEAD
         <div class="modal-header" style="background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%); color: white;">
+=======
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           <h5 class="modal-title" id="addStockModalLabel">
             <i class="bi bi-plus-circle-fill me-2"></i>Add New Stock Batch
           </h5>
@@ -1391,13 +1558,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <div class="modal-body">
           <form id="addStockForm">
             <input type="hidden" id="stockId">
+<<<<<<< HEAD
             <input type="hidden" id="stockBatchNumber">
+=======
+            <input type="hidden" id="stockBatchId">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <input type="hidden" id="stockItemCode">
             
             <div class="auto-generated-info">
               <strong><i class="bi bi-info-circle-fill"></i> Auto-Generated IDs</strong>
               <div class="info-details">
+<<<<<<< HEAD
                 <div><strong>Batch Number:</strong> <span id="displayBatchNumber"></span></div>
+=======
+                <div><strong>Batch ID:</strong> <span id="displayBatchId"></span></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <div><strong>Item Code:</strong> <span id="displayItemCode"></span></div>
               </div>
             </div>
@@ -1410,6 +1585,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <label for="stockName" class="form-label">
                   Medicine/Item Name <span class="required">*</span>
                 </label>
+<<<<<<< HEAD
                 <div class="autocomplete-wrapper" style="position: relative;">
                   <input type="text" class="form-control" id="stockName" placeholder="Type to search medicines..." autocomplete="off" required>
                   <div id="medicineSuggestions" class="autocomplete-dropdown" style="display: none;"></div>
@@ -1426,13 +1602,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <div class="invalid-feedback">
                   Supplier name is required. Please enter a valid supplier.
                 </div>
+=======
+                <input type="text" class="form-control" id="stockName" placeholder="e.g., Paracetamol, Amoxicillin" required>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
               <div class="mb-3">
                 <label for="stockDescription" class="form-label">
                   Description <span class="required">*</span>
                 </label>
                 <textarea class="form-control" id="stockDescription" rows="3" placeholder="Enter item description, usage, or notes..." required></textarea>
+<<<<<<< HEAD
                 <small class="text-muted" id="descriptionHint" style="display: none;">Description is auto-filled for existing medicines. Edit only for new medicines.</small>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
 
@@ -1440,8 +1622,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               <div class="form-section-title">
                 <i class="bi bi-calculator-fill"></i> Quantity Management
               </div>
+<<<<<<< HEAD
               <!-- Quantity section for Add mode (three boxes) -->
               <div class="quantity-section" id="addQuantitySection">
+=======
+              <div class="quantity-section">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <div class="quantity-inputs">
                   <div class="quantity-input-group">
                     <label>
@@ -1449,11 +1635,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     </label>
                     <input type="number" class="form-control" id="stockCurrentQty" min="0" value="0" readonly>
                   </div>
+<<<<<<< HEAD
                     <div class="quantity-input-group">
                     <label>
                       <i class="bi bi-plus-circle"></i> New Arrivals
                     </label>
                     <input type="number" class="form-control" id="stockNewQty" min="0" placeholder="Enter quantity">
+=======
+                  <div class="quantity-input-group">
+                    <label>
+                      <i class="bi bi-plus-circle"></i> New Arrivals
+                    </label>
+                    <input type="number" class="form-control" id="stockNewQty" min="0" value="0" placeholder="0">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   </div>
                   <div class="quantity-input-group">
                     <label>
@@ -1463,6 +1657,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                   </div>
                 </div>
               </div>
+<<<<<<< HEAD
               <!-- Quantity section for Edit mode (single input) -->
               <div class="quantity-section" id="editQuantitySection" style="display: none;">
                 <div class="mb-3">
@@ -1473,6 +1668,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                   <small class="text-muted">Edit the total stock quantity for this specific batch</small>
                 </div>
               </div>
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             </div>
 
             <div class="form-section">
@@ -1483,6 +1680,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <label for="stockExpiry" class="form-label">
                   Expiry Date <span class="required">*</span>
                 </label>
+<<<<<<< HEAD
                 <div class="input-group">
                   <input type="text" class="form-control" id="stockExpiry" placeholder="YYYY-MM-DD" maxlength="10" required>
                   <button class="btn btn-outline-secondary" type="button" id="stockExpiryCalendarBtn" title="Open Calendar">
@@ -1492,6 +1690,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <div class="invalid-feedback" id="expiryDateError">
                   Please enter a valid date in YYYY-MM-DD format.
                 </div>
+=======
+                <input type="date" class="form-control" id="stockExpiry" required>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
           </form>
@@ -1500,7 +1701,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="bi bi-x-circle"></i> Cancel
           </button>
+<<<<<<< HEAD
           <button type="button" class="btn btn-primary" id="saveStockBtn" style="background: linear-gradient(135deg, #6b0d00 0%, #8b1a00 100%); border: none;">
+=======
+          <button type="button" class="btn btn-primary" id="saveStockBtn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <i class="bi bi-check-circle"></i> Save Stock
           </button>
         </div>
@@ -1526,6 +1731,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/logout.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -1533,12 +1739,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   <script>
     let medicines = [];
     let activeTable, archiveTable, stocksTable, lowStockDashTable, expiredDashTable;
+=======
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    let medicines = [];
+    let activeTable, bodTable, archiveTable, stocksTable, lowStockDashTable, expiredDashTable;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
     function ajaxRequest(action, data = {}) {
       return $.ajax({
         url: '',
         method: 'POST',
         data: { action, ...data },
+<<<<<<< HEAD
         dataType: 'json',
         timeout: 30000, // 30 second timeout
         error: function(xhr, status, error) {
@@ -1621,6 +1834,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
 
+=======
+        dataType: 'json'
+      });
+    }
+
+    function loadMedicines() {
+      ajaxRequest('getMedicines').done(function(response) {
+        if (response.success) {
+          medicines = response.data;
+          renderMedicines();
+          renderStocks();
+          updateOverview();
+          updateDashboardTables();
+          updateDashboardCards();
+        }
+      });
+    }
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     function getDaysUntilExpiry(expiryDate) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -1665,8 +1897,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <div class="alert-item-card ${cardClass}">
               <div class="alert-item-info">
                 <div>
+<<<<<<< HEAD
                   <div class="alert-item-name">${medicine.item_name}</div>
                   <div class="alert-item-code">${medicine.batch_number} - ${medicine.item_code}</div>
+=======
+                  <div class="alert-item-name">${medicine.name}</div>
+                  <div class="alert-item-code">${medicine.batchId} - ${medicine.code}</div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
                 <span class="alert-item-badge ${medicine.quantity === 0 ? 'danger' : 'warning'}">
                   ${medicine.quantity} left
@@ -1674,7 +1911,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               </div>
               <div class="alert-item-details">
                 <span><i class="bi bi-box"></i> Dispensed: ${medicine.dispensed}</span>
+<<<<<<< HEAD
                 <span><i class="bi bi-calendar"></i> Exp: ${medicine.expiry_date}</span>
+=======
+                <span><i class="bi bi-calendar"></i> Exp: ${medicine.expiry}</span>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
           `);
@@ -1682,7 +1923,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       }
 
       const nearingExpirationItems = medicines.filter(m => {
+<<<<<<< HEAD
         const daysLeft = getDaysUntilExpiry(m.expiry_date);
+=======
+        const daysLeft = getDaysUntilExpiry(m.expiry);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         return daysLeft > 0 && daysLeft <= 30 && m.status !== 'archive';
       });
       
@@ -1694,6 +1939,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           </div>
         `);
       } else {
+<<<<<<< HEAD
         nearingExpirationItems.sort((a, b) => getDaysUntilExpiry(a.expiry_date) - getDaysUntilExpiry(b.expiry_date));
         nearingExpirationItems.forEach(medicine => {
           const daysLeft = getDaysUntilExpiry(medicine.expiry_date);
@@ -1707,12 +1953,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                   <div class="alert-item-code">${medicine.batch_number} - ${medicine.item_code}</div>
                 </div>
                 <span class="alert-item-badge danger">
+=======
+        nearingExpirationItems.sort((a, b) => getDaysUntilExpiry(a.expiry) - getDaysUntilExpiry(b.expiry));
+        nearingExpirationItems.forEach(medicine => {
+          const daysLeft = getDaysUntilExpiry(medicine.expiry);
+          const daysText = `${daysLeft} days left`;
+          
+          expiredContainer.append(`
+            <div class="alert-item-card">
+              <div class="alert-item-info">
+                <div>
+                  <div class="alert-item-name">${medicine.name}</div>
+                  <div class="alert-item-code">${medicine.batchId} - ${medicine.code}</div>
+                </div>
+                <span class="alert-item-badge warning">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   ${daysText}
                 </span>
               </div>
               <div class="alert-item-details">
                 <span><i class="bi bi-box"></i> Qty: ${medicine.quantity}</span>
+<<<<<<< HEAD
                 <span><i class="bi bi-calendar"></i> ${medicine.expiry_date}</span>
+=======
+                <span><i class="bi bi-calendar"></i> ${medicine.expiry}</span>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
           `);
@@ -1721,6 +1986,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     function updateDashboardTables() {
+<<<<<<< HEAD
       // Ensure tables are initialized before updating
       if (!lowStockDashTable && $('#lowStockDashboardTable').length) {
         lowStockDashTable = initializeDataTableIfNeeded('lowStockDashboardTable', {
@@ -1739,44 +2005,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       
       if (lowStockDashTable) lowStockDashTable.clear();
       if (expiredDashTable) expiredDashTable.clear();
+=======
+      lowStockDashTable.clear();
+      expiredDashTable.clear();
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
       medicines.filter(m => m.quantity <= 10 && m.status === 'active').forEach(medicine => {
         lowStockDashTable.row.add($(`
           <tr>
+<<<<<<< HEAD
             <td>${medicine.batch_number}</td>
             <td>${medicine.item_code}</td>
             <td>${medicine.item_name}</td>
             <td>${medicine.quantity}</td>
             <td>${medicine.dispensed}</td>
             <td>${medicine.expiry_date}</td>
+=======
+            <td>${medicine.batchId}</td>
+            <td>${medicine.code}</td>
+            <td>${medicine.name}</td>
+            <td>${medicine.quantity}</td>
+            <td>${medicine.dispensed}</td>
+            <td>${medicine.expiry}</td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <td><span class="status-badge status-low">Low Stock</span></td>
           </tr>
         `)[0]);
       });
 
       medicines.filter(m => {
+<<<<<<< HEAD
         const daysLeft = getDaysUntilExpiry(m.expiry_date);
         return daysLeft > 0 && daysLeft <= 30 && m.status !== 'archive';
       }).forEach(medicine => {
         const daysLeft = getDaysUntilExpiry(medicine.expiry_date);
+=======
+        const daysLeft = getDaysUntilExpiry(m.expiry);
+        return daysLeft > 0 && daysLeft <= 30 && m.status !== 'archive';
+      }).forEach(medicine => {
+        const daysLeft = getDaysUntilExpiry(medicine.expiry);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         const statusClass = 'status-low';
         const statusText = 'Nearing Expiration';
         const daysText = `${daysLeft} days`;
 
         expiredDashTable.row.add($(`
           <tr>
+<<<<<<< HEAD
             <td>${medicine.batch_number}</td>
             <td>${medicine.item_code}</td>
             <td>${medicine.item_name}</td>
             <td>${medicine.quantity}</td>
             <td>${medicine.dispensed}</td>
             <td>${medicine.expiry_date}</td>
+=======
+            <td>${medicine.batchId}</td>
+            <td>${medicine.code}</td>
+            <td>${medicine.name}</td>
+            <td>${medicine.quantity}</td>
+            <td>${medicine.dispensed}</td>
+            <td>${medicine.expiry}</td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <td>${daysText}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
           </tr>
         `)[0]);
       });
 
+<<<<<<< HEAD
       if (lowStockDashTable) lowStockDashTable.draw();
       if (expiredDashTable) expiredDashTable.draw();
     }
@@ -2357,11 +2653,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $('#stockName').on('input', function() {
         if ($(this).val().trim() === '') {
           resetMedicineFields();
+=======
+      lowStockDashTable.draw();
+      expiredDashTable.draw();
+    }
+
+    $(document).ready(function() {
+      activeTable = $('#activeTable').DataTable({ pageLength: 5, order: [[0, 'asc']] });
+      bodTable = $('#bodTable').DataTable({ pageLength: 5, order: [[0, 'asc']] });
+      archiveTable = $('#archiveTable').DataTable({ pageLength: 5, order: [[0, 'asc']] });
+      stocksTable = $('#stocksTable').DataTable({ pageLength: 5, order: [[0, 'asc']] });
+      lowStockDashTable = $('#lowStockDashboardTable').DataTable({ pageLength: 5, order: [[0, 'asc']] });
+      expiredDashTable = $('#expiredDashboardTable').DataTable({ pageLength: 5, order: [[5, 'asc']] });
+
+      loadMedicines();
+      checkAndArchiveExpired();
+
+      $('#stockNewQty').on('input', function() {
+        const current = parseInt($('#stockCurrentQty').val()) || 0;
+        const newQty = parseInt($(this).val()) || 0;
+        $('#stockTotalQty').val(current + newQty);
+      });
+
+      $('#stockName').on('blur', function() {
+        const medicineName = $(this).val().trim();
+        if (medicineName && !$('#stockId').val()) {
+          ajaxRequest('getItemCode', { name: medicineName }).done(function(response) {
+            if (response.success) {
+              $('#stockItemCode').val(response.code);
+              $('#displayItemCode').text(response.code);
+            }
+          });
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }
       });
 
       $("#inventoryMain").on("click", function(e) {
         e.preventDefault();
+<<<<<<< HEAD
         // On inventory page, clicking main link shows overview and keeps submenu open
         $("#inventorySubmenu").addClass("show");
         $("#inventoryMain").parent().addClass("active");
@@ -2372,6 +2701,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         setTimeout(function() {
         checkAndArchiveExpired();
         }, 300);
+=======
+        $("#inventorySubmenu").toggleClass("show");
+        $("#inventoryOverviewSection").show();
+        $("#medicinesSection").hide();
+        $("#stocksSection").hide();
+        checkAndArchiveExpired();
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       });
 
       $("#medicineTab").on("click", function(e) {
@@ -2379,6 +2715,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $("#inventoryOverviewSection").hide();
         $("#medicinesSection").show();
         $("#stocksSection").hide();
+<<<<<<< HEAD
         // Mark active tab
         $("#medicineTab").addClass("active");
         $("#stockTab").removeClass("active");
@@ -2405,6 +2742,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           // Refresh data in background to ensure it's up to date
           loadMedicines();
         }
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       });
 
       $("#stockTab").on("click", function(e) {
@@ -2412,6 +2751,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $("#inventoryOverviewSection").hide();
         $("#medicinesSection").hide();
         $("#stocksSection").show();
+<<<<<<< HEAD
         // Mark active tab
         $("#stockTab").addClass("active");
         $("#medicineTab").removeClass("active");
@@ -2506,6 +2846,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           // No data, load it
           loadMedicines();
         }
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       });
 
       $('#addStockBtn').on('click', function(e) {
@@ -2513,6 +2855,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $('#addStockModalLabel').html('<i class="bi bi-plus-circle-fill me-2"></i>Add New Stock Batch');
         $('#addStockForm')[0].reset();
         $('#stockId').val('');
+<<<<<<< HEAD
         resetMedicineFields();
         $('#stockSupplier').removeClass('is-invalid');
         $('#stockExpiry').removeClass('is-invalid');
@@ -2527,12 +2870,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           if (response.success) {
             $('#stockBatchNumber').val(response.batch_number);
             $('#displayBatchNumber').text(response.batch_number);
+=======
+        $('#stockCurrentQty').val(0);
+        $('#stockNewQty').val(0);
+        $('#stockTotalQty').val(0);
+        
+        ajaxRequest('getNextBatchId').done(function(response) {
+          if (response.success) {
+            $('#stockBatchId').val(response.batchId);
+            $('#displayBatchId').text(response.batchId);
+            $('#displayItemCode').text('Will be assigned based on medicine name');
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           }
         });
         
         new bootstrap.Modal(document.getElementById('addStockModal')).show();
       });
 
+<<<<<<< HEAD
       // Function to validate expiry date format strictly
       function validateExpiryDate(dateString) {
         if (!dateString) {
@@ -3131,6 +3486,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             text: errorMessage,
             confirmButtonText: 'OK'
           });
+=======
+      $('#saveStockBtn').on('click', function() {
+        const id = $('#stockId').val();
+        const batchId = $('#stockBatchId').val();
+        const code = $('#stockItemCode').val();
+        const name = $('#stockName').val().trim();
+        const quantity = parseInt($('#stockTotalQty').val()) || 0;
+        const expiry = $('#stockExpiry').val();
+        const description = $('#stockDescription').val();
+
+        if (!name || quantity < 0 || !expiry || !description) {
+          alert('Please fill all required fields');
+          return;
+        }
+
+        const action = id ? 'updateMedicine' : 'addMedicine';
+        const data = id ? { id, name, quantity, expiry, description } : { batchId, code, name, quantity, expiry, description };
+        
+        ajaxRequest(action, data).done(function(response) {
+          if (response.success) {
+            $('#addStockForm')[0].reset();
+            bootstrap.Modal.getInstance(document.getElementById('addStockModal')).hide();
+            loadMedicines();
+            checkAndArchiveExpired();
+          } else {
+            alert('Error: ' + response.error);
+          }
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         });
       });
 
@@ -3145,6 +3528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           const statusText = getStatusText(medicine);
           $('#viewModalContent').html(`
             <div class="row">
+<<<<<<< HEAD
               <div class="col-md-6 mb-3"><strong>Batch Number:</strong><br>${medicine.batch_number}</div>
               <div class="col-md-6 mb-3"><strong>Item Code:</strong><br>${medicine.item_code}</div>
               <div class="col-md-6 mb-3"><strong>Item Name:</strong><br>${medicine.item_name}</div>
@@ -3154,6 +3538,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
               <div class="col-md-6 mb-3"><strong>Expiry Date:</strong><br>${medicine.expiry_date}</div>
               <div class="col-md-6 mb-3"><strong>Supplier:</strong><br>${medicine.supplier || 'N/A'}</div>
               <div class="col-md-6 mb-3"><strong>Status:</strong><br>${getStatusBadges(medicine)}</div>
+=======
+              <div class="col-md-6 mb-3"><strong>Batch ID:</strong><br>${medicine.batchId}</div>
+              <div class="col-md-6 mb-3"><strong>Item Code:</strong><br>${medicine.code}</div>
+              <div class="col-md-6 mb-3"><strong>Item Name:</strong><br>${medicine.name}</div>
+              <div class="col-md-6 mb-3"><strong>Quantity:</strong><br>${medicine.quantity}</div>
+              <div class="col-md-6 mb-3"><strong>Dispensed:</strong><br>${medicine.dispensed}</div>
+              <div class="col-md-6 mb-3"><strong>Expiry Date:</strong><br>${medicine.expiry}</div>
+              <div class="col-md-6 mb-3"><strong>Status:</strong><br><span class="status-badge ${statusClass}">${statusText}</span></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               <div class="col-12 mb-3"><strong>Description:</strong><br>${medicine.description}</div>
             </div>
           `);
@@ -3168,6 +3561,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (medicine) {
           $('#addStockModalLabel').html('<i class="bi bi-pencil-square me-2"></i>Edit Stock');
           $('#stockId').val(medicine.id);
+<<<<<<< HEAD
           $('#stockBatchNumber').val(medicine.batch_number);
           $('#stockItemCode').val(medicine.item_code);
           $('#stockName').val(medicine.item_name);
@@ -3188,11 +3582,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           
           $('#displayBatchNumber').text(medicine.batch_number);
           $('#displayItemCode').text(medicine.item_code);
+=======
+          $('#stockBatchId').val(medicine.batchId);
+          $('#stockItemCode').val(medicine.code);
+          $('#stockName').val(medicine.name);
+          $('#stockCurrentQty').val(medicine.quantity);
+          $('#stockNewQty').val(0);
+          $('#stockTotalQty').val(medicine.quantity);
+          $('#stockExpiry').val(medicine.expiry);
+          $('#stockDescription').val(medicine.description);
+          
+          $('#displayBatchId').text(medicine.batchId);
+          $('#displayItemCode').text(medicine.code);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           
           new bootstrap.Modal(document.getElementById('addStockModal')).show();
         }
       });
 
+<<<<<<< HEAD
     });
 
     function getStatusClass(medicine) {
@@ -3235,10 +3643,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         return 'status-low';
       }
       
+=======
+      $('#toggleDetailedView').on('click', function() {
+        const detailedSection = $('#detailedTablesSection');
+        const isVisible = detailedSection.is(':visible');
+        detailedSection.slideToggle();
+        $(this).html(isVisible 
+          ? '<i class="bi bi-table"></i> View Detailed Tables' 
+          : '<i class="bi bi-x-lg"></i> Hide Detailed Tables'
+        );
+      });
+
+      $("#inventoryMain").click();
+    });
+
+    function getStatusClass(medicine) {
+      if (medicine.status === 'archive') return 'status-inactive';
+      if (medicine.status === 'bod') return 'status-bod';
+      if (medicine.quantity <= 10) return 'status-low';
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       return 'status-active';
     }
 
     function getStatusText(medicine) {
+<<<<<<< HEAD
       if (medicine.status === 'archive') {
         // Check if it's expired (past expiry date)
         const expiryDate = new Date(medicine.expiry_date);
@@ -3376,6 +3804,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <td>${medicine.dispensed}</td>
             <td>${medicine.expiry_date}</td>
             <td>${statusBadges}</td>
+=======
+      if (medicine.status === 'archive') return 'Archived';
+      if (medicine.status === 'bod') return 'BOD';
+      if (medicine.quantity <= 10) return 'Low Stock';
+      return 'In Stock';
+    }
+
+    function renderMedicines() {
+      activeTable.clear();
+      bodTable.clear();
+      archiveTable.clear();
+
+      medicines.forEach(medicine => {
+        const statusClass = getStatusClass(medicine);
+        const statusText = getStatusText(medicine);
+        const row = `
+          <tr>
+            <td>${medicine.batchId}</td>
+            <td>${medicine.code}</td>
+            <td>${medicine.name}</td>
+            <td>${medicine.quantity}</td>
+            <td>${medicine.dispensed}</td>
+            <td>${medicine.expiry}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <td>
               <button class="btn btn-secondary btn-sm view-btn" data-id="${medicine.id}">
                 <i class="bi bi-eye"></i> View
@@ -3384,6 +3837,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           </tr>
         `;
         
+<<<<<<< HEAD
         if (effectiveStatus === 'active' && activeTable) {
           activeTable.row.add($(row)[0]);
           activeCount++;
@@ -3455,10 +3909,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <td>${medicine.expiry_date}</td>
             <td>${statusBadges}</td>
             <td>${medicine.dispensed || 0}</td>
+=======
+        if (medicine.status === 'active') {
+          activeTable.row.add($(row)[0]);
+        } else if (medicine.status === 'bod') {
+          bodTable.row.add($(row)[0]);
+        } else if (medicine.status === 'archive') {
+          archiveTable.row.add($(row)[0]);
+        }
+      });
+
+      activeTable.draw();
+      bodTable.draw();
+      archiveTable.draw();
+    }
+
+    function renderStocks() {
+      stocksTable.clear();
+
+      medicines.forEach(medicine => {
+        const statusClass = getStatusClass(medicine);
+        const statusText = getStatusText(medicine);
+        const row = `
+          <tr>
+            <td>${medicine.batchId}</td>
+            <td>${medicine.code}</td>
+            <td>${medicine.name}</td>
+            <td>${medicine.quantity}</td>
+            <td>${medicine.expiry}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <td>
               <button class="btn btn-secondary btn-sm view-btn" data-id="${medicine.id}">
                 <i class="bi bi-eye"></i> View
               </button>
+<<<<<<< HEAD
               <button class="btn btn-primary btn-sm edit-stock-btn" data-id="${medicine.id}" style="margin-left: 5px;">
                 <i class="bi bi-pencil-square"></i> Edit
               </button>
@@ -3472,6 +3957,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       });
 
       if (stocksTable) stocksTable.draw();
+=======
+            </td>
+          </tr>
+        `;
+        stocksTable.row.add($(row)[0]);
+      });
+
+      stocksTable.draw();
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     }
 
     function sortMedicines() {
@@ -3479,6 +3973,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       medicines.sort((a, b) => {
         let compareA, compareB;
         switch(sortBy) {
+<<<<<<< HEAD
           case 'batch':
             compareA = a.batch_number;
             compareB = b.batch_number;
@@ -3502,6 +3997,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           default:
             compareA = a.batch_number;
             compareB = b.batch_number;
+=======
+          case 'batch': compareA = a.batchId; compareB = b.batchId; break;
+          case 'code': compareA = a.code; compareB = b.code; break;
+          case 'name': compareA = a.name; compareB = b.name; break;
+          case 'quantity': compareA = a.quantity; compareB = b.quantity; break;
+          case 'expiry': compareA = new Date(a.expiry); compareB = new Date(b.expiry); break;
+          default: compareA = a.batchId; compareB = b.batchId;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         }
         if (compareA < compareB) return -1;
         if (compareA > compareB) return 1;
@@ -3509,8 +4012,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       });
       renderMedicines();
     }
+<<<<<<< HEAD
   </script>
   <script src="../js/mobile-menu.js"></script>
 </body>
 </html>
+=======
+
+    function updateOverview() {
+      const total = medicines.length;
+      const lowStock = medicines.filter(m => m.quantity <= 10 && m.status === 'active').length;
+      const nearingExpiration = medicines.filter(m => isExpiredOrNearing(m.expiry) && m.status !== 'archive').length;
+      $("#totalMedicinesCount").text(total);
+      $("#lowStockCount").text(lowStock);
+      $("#expiredCount").text(nearingExpiration);
+    }
+  </script>
+</body>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </html>

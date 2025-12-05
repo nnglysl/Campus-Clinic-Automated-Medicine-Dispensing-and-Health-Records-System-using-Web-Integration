@@ -46,6 +46,7 @@ try {
                 'phone' => $_POST['phone'],
                 'address' => $_POST['address'],
                 'role' => $_POST['role'],
+<<<<<<< HEAD
                 'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
                 'status' => 'active'
             ];
@@ -60,6 +61,24 @@ try {
 
             $sql = "INSERT INTO employees (first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, password, status) 
                     VALUES (:first_name, :middle_name, :last_name, :birth_date, :age, :gender, :email, :phone, :address, :role, :password, :status)";
+=======
+                'username' => $_POST['username'],
+                'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
+                'photo' => $_POST['photoData'] ?? null,
+                'status' => 'active'
+            ];
+
+            // Check if email or username exists
+            $stmt = $pdo->prepare("SELECT id FROM employees WHERE email = ? OR username = ?");
+            $stmt->execute([$data['email'], $data['username']]);
+            if ($stmt->fetch()) {
+                echo json_encode(['success' => false, 'error' => 'Email or username already exists']);
+                break;
+            }
+
+            $sql = "INSERT INTO employees (first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, username, password, photo, status) 
+                    VALUES (:first_name, :middle_name, :last_name, :birth_date, :age, :gender, :email, :phone, :address, :role, :username, :password, :photo, :status)";
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
@@ -80,6 +99,7 @@ try {
                 'email' => $_POST['email'],
                 'phone' => $_POST['phone'],
                 'address' => $_POST['address'],
+<<<<<<< HEAD
                 'role' => $_POST['role']
             ];
 
@@ -88,6 +108,18 @@ try {
             $stmt->execute([$data['email'], $id]);
             if ($stmt->fetch()) {
                 echo json_encode(['success' => false, 'error' => 'Email already exists']);
+=======
+                'role' => $_POST['role'],
+                'username' => $_POST['username'],
+                'photo' => $_POST['photoData'] ?? null
+            ];
+
+            // Check if email or username exists for other employees
+            $stmt = $pdo->prepare("SELECT id FROM employees WHERE (email = ? OR username = ?) AND id != ?");
+            $stmt->execute([$data['email'], $data['username'], $id]);
+            if ($stmt->fetch()) {
+                echo json_encode(['success' => false, 'error' => 'Email or username already exists']);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 break;
             }
 
@@ -101,13 +133,23 @@ try {
                     email = :email,
                     phone = :phone,
                     address = :address,
+<<<<<<< HEAD
                     role = :role
+=======
+                    role = :role,
+                    username = :username,
+                    photo = :photo
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     WHERE id = :id";
 
             // Update password if provided
             if (!empty($_POST['password'])) {
                 $data['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+<<<<<<< HEAD
                 $sql = str_replace("role = :role", "role = :role, password = :password", $sql);
+=======
+                $sql = str_replace("photo = :photo", "photo = :photo, password = :password", $sql);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             }
 
             $stmt = $pdo->prepare($sql);
@@ -137,6 +179,65 @@ try {
             echo json_encode(['success' => true]);
             break;
 
+<<<<<<< HEAD
+=======
+        case 'updateSchedule':
+            $employeeId = $_POST['employeeId'];
+            $schedules = json_decode($_POST['schedules'], true);
+
+            // Delete existing schedules
+            $stmt = $pdo->prepare("DELETE FROM employee_schedules WHERE employee_id = ?");
+            $stmt->execute([$employeeId]);
+
+            // Insert new schedules
+            $stmt = $pdo->prepare("
+                INSERT INTO employee_schedules (employee_id, day_of_week, time_in, time_out, break_start, break_end)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+
+            foreach ($schedules as $schedule) {
+                $stmt->execute([
+                    $employeeId,
+                    $schedule['day'],
+                    $schedule['timeIn'],
+                    $schedule['timeOut'],
+                    $schedule['breakStart'] ?? null,
+                    $schedule['breakEnd'] ?? null
+                ]);
+            }
+
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'checkIn':
+            $employeeId = $_POST['employeeId'];
+            $status = $_POST['status']; // 'in', 'out', 'break'
+
+            // Check if already checked in today
+            $stmt = $pdo->prepare("SELECT id FROM employee_attendance WHERE employee_id = ? AND date = CURDATE()");
+            $stmt->execute([$employeeId]);
+            $existing = $stmt->fetch();
+
+            if ($existing) {
+                // Update existing record
+                $sql = $status === 'out' 
+                    ? "UPDATE employee_attendance SET check_out_time = NOW(), status = ? WHERE id = ?"
+                    : "UPDATE employee_attendance SET status = ? WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$status, $existing['id']]);
+            } else {
+                // Create new record
+                $stmt = $pdo->prepare("
+                    INSERT INTO employee_attendance (employee_id, check_in_time, status, date)
+                    VALUES (?, NOW(), ?, CURDATE())
+                ");
+                $stmt->execute([$employeeId, $status]);
+            }
+
+            echo json_encode(['success' => true]);
+            break;
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         default:
             echo json_encode(['success' => false, 'error' => 'Invalid action']);
     }

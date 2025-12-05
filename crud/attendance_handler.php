@@ -1,7 +1,10 @@
 <?php
 session_start();
 require_once(__DIR__ . '/../db.php');
+<<<<<<< HEAD
 date_default_timezone_set('Asia/Manila'); // or your local timezone
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
 header('Content-Type: application/json');
 
@@ -69,8 +72,13 @@ try {
         // TIME IN
         if ($action === 'timeIn') {
             $today = date('Y-m-d');
+<<<<<<< HEAD
             $currentTime = date('Y-m-d H:i:s');
 
+=======
+            $currentTime = date('H:i:s');
+            
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             // Check if already timed in today
             $stmt = $pdo->prepare("
                 SELECT id, time_in, time_out 
@@ -96,6 +104,7 @@ try {
                 }
             }
             
+<<<<<<< HEAD
             // Extract time portion from datetime
             $timeOnly = date('H:i:s', strtotime($currentTime));
             
@@ -124,6 +133,26 @@ try {
             
             error_log("Attendance SAVED: Record ID $recordId, User ID $userId, Date $today, Time In: $timeOnly, Status: $status");
                 
+=======
+            if ($existing) {
+                // Update existing record
+                $stmt = $pdo->prepare("
+                    UPDATE attendance 
+                    SET time_in = ?, status = ?, updated_at = NOW()
+                    WHERE id = ?
+                ");
+                $stmt->execute([$currentTime, $status, $existing['id']]);
+            } else {
+                // Insert new record
+                $stmt = $pdo->prepare("
+                    INSERT INTO attendance 
+                    (user_id, date, time_in, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, NOW(), NOW())
+                ");
+                $stmt->execute([$userId, $today, $currentTime, $status]);
+            }
+            
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             echo json_encode([
                 'success' => true,
                 'message' => 'Timed in successfully',
@@ -136,9 +165,15 @@ try {
         // TIME OUT
         if ($action === 'timeOut') {
             $today = date('Y-m-d');
+<<<<<<< HEAD
             $currentTime = date('Y-m-d H:i:s');
 
             // Check if there's a time in record for today
+=======
+            $currentTime = date('H:i:s');
+            
+            // Check if timed in today
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             $stmt = $pdo->prepare("
                 SELECT id, time_in, time_out 
                 FROM attendance 
@@ -148,13 +183,18 @@ try {
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$existing || !$existing['time_in']) {
+<<<<<<< HEAD
                 throw new Exception('You must time in first before timing out');
+=======
+                throw new Exception('You need to time in first');
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             }
             
             if ($existing['time_out']) {
                 throw new Exception('You have already timed out today');
             }
             
+<<<<<<< HEAD
             // Extract time portion from datetime
             $timeOnly = date('H:i:s', strtotime($currentTime));
             
@@ -176,11 +216,35 @@ try {
             }
             
             error_log("Attendance TIME OUT: User ID $userId, Date $today, Time Out: $timeOnly, Rows Affected: $affectedRows");
+=======
+            // Calculate if it's a half day
+            $timeIn = strtotime($today . ' ' . $existing['time_in']);
+            $timeOut = strtotime($today . ' ' . $currentTime);
+            $hoursWorked = ($timeOut - $timeIn) / 3600;
+            
+            $status = $existing['status'] ?? 'present';
+            if ($hoursWorked < 4) {
+                $status = 'half_day';
+            }
+            
+            // Update time out
+            $stmt = $pdo->prepare("
+                UPDATE attendance 
+                SET time_out = ?, status = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$currentTime, $status, $existing['id']]);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             
             echo json_encode([
                 'success' => true,
                 'message' => 'Timed out successfully',
+<<<<<<< HEAD
                 'time' => date('h:i A')
+=======
+                'time' => date('h:i A'),
+                'hoursWorked' => round($hoursWorked, 2)
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             ]);
             exit;
         }

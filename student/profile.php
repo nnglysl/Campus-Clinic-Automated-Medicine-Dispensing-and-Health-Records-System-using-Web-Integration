@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+<<<<<<< HEAD
 require_once '../includes/patient_sync.php';
 session_start();
 
@@ -10,12 +11,26 @@ ini_set('display_errors', 1);
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../auth/login.php");
+=======
+session_start();
+
+// Enable error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     exit();
 }
 
 $user = [
     'id' => $_SESSION['user_id'],
+<<<<<<< HEAD
     'role' => $_SESSION['role'] ?? 'patient'
+=======
+    'role' => $_SESSION['role'] ?? 'student'
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 ];
 
 $pdo = getDB();
@@ -27,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     try {
         // Personal Information
         $firstName = $_POST['first_name'] ?? '';
+<<<<<<< HEAD
         $middleName = $_POST['middle_name'] ?? '';
         $lastName = $_POST['last_name'] ?? '';
         $email = $_POST['email'] ?? '';
@@ -38,6 +54,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $gender = $_POST['gender'] ?? '';
         
         // Academic Information
+=======
+        $lastName = $_POST['last_name'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $contact = $_POST['contact'] ?? '';
+        $dob = $_POST['dob'] ?? '';
+        $bloodType = $_POST['blood_type'] ?? '';
+        $address = $_POST['address'] ?? '';
+        
+        // Academic Information
+        $campus = $_POST['campus'] ?? '';
+        $college = $_POST['college'] ?? '';
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         $course = $_POST['course'] ?? '';
         $yearLevel = $_POST['year_level'] ?? '';
         
@@ -45,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $guardianName = $_POST['guardian_name'] ?? '';
         $relationship = $_POST['relationship'] ?? '';
         $guardianContact = $_POST['guardian_contact'] ?? '';
+<<<<<<< HEAD
         
         // Medical Information
         $allergies = $_POST['allergies'] ?? '';
@@ -309,10 +338,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         // already handle syncing to patients table automatically
         // If triggers are removed, uncomment the line below:
         // syncPatientRecords($pdo);
+=======
+        $guardianEmail = $_POST['guardian_email'] ?? '';
+        
+        // Handle photo upload
+        $photoPath = null;
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = '../uploads/profiles/';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            
+            $fileExtension = pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION);
+            $fileName = 'profile_' . $user['id'] . '_' . time() . '.' . $fileExtension;
+            $photoPath = $uploadDir . $fileName;
+            
+            if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $photoPath)) {
+                $photoPath = '/uploads/profiles/' . $fileName;
+            } else {
+                $photoPath = null;
+            }
+        }
+        
+        // Update patients table
+        $sql = "UPDATE patients SET 
+                full_name = ?,
+                email = ?,
+                contact = ?,
+                dob = ?,
+                blood_type = ?,
+                address = ?,
+                campus = ?,
+                college = ?,
+                course = ?,
+                year_level = ?,
+                guardian_name = ?,
+                guardian_relationship = ?,
+                guardian_contact = ?,
+                guardian_email = ?";
+        
+        $params = [
+            $firstName . ' ' . $lastName,
+            $email,
+            $contact,
+            $dob,
+            $bloodType,
+            $address,
+            $campus,
+            $college,
+            $course,
+            $yearLevel,
+            $guardianName,
+            $relationship,
+            $guardianContact,
+            $guardianEmail
+        ];
+        
+        if ($photoPath) {
+            $sql .= ", profile_photo = ?";
+            $params[] = $photoPath;
+        }
+        
+        $sql .= ", updated_at = NOW() WHERE id = ?";
+        $params[] = $user['id'];
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         
         // Update session variables
         $_SESSION['fname'] = $firstName;
         $_SESSION['lname'] = $lastName;
+<<<<<<< HEAD
         $_SESSION['email'] = $email;
         $_SESSION['username'] = trim($firstName . ' ' . $lastName);
         
@@ -330,11 +427,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             'photo_uploaded' => !empty($photoPath),
             'upload_error' => $uploadError ?? null
         ]);
+=======
+        
+        echo json_encode(['success' => true, 'message' => 'Profile updated successfully!']);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         exit();
         
     } catch (PDOException $e) {
         error_log("Error updating profile: " . $e->getMessage());
+<<<<<<< HEAD
         echo json_encode(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()]);
+=======
+        echo json_encode(['success' => false, 'message' => 'An error occurred. Please try again.']);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         exit();
     }
 }
@@ -342,6 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 // Fetch student profile data
 $studentProfile = [];
 try {
+<<<<<<< HEAD
     // Get basic user info
     $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$user['id']]);
@@ -420,6 +526,57 @@ try {
     $stmt->execute([$user['id']]);
     $result = $stmt->fetch();
     $stats['totalVisits'] = $result['count'] ?? 0;
+=======
+    $stmt = $pdo->prepare("SELECT * FROM patients WHERE id = ?");
+    $stmt->execute([$user['id']]);
+    $studentProfile = $stmt->fetch();
+    
+    if (!$studentProfile) {
+        // Create default profile if not exists
+        $studentProfile = [
+            'full_name' => 'Student',
+            'sr_code' => 'N/A',
+            'email' => '',
+            'contact' => '',
+            'dob' => '',
+            'blood_type' => '',
+            'address' => '',
+            'campus' => '',
+            'college' => '',
+            'course' => '',
+            'year_level' => '',
+            'guardian_name' => '',
+            'guardian_relationship' => '',
+            'guardian_contact' => '',
+            'guardian_email' => '',
+            'profile_photo' => null
+        ];
+    }
+    
+    // Split full name into first and last name
+    $nameParts = explode(' ', $studentProfile['full_name']);
+    $studentProfile['first_name'] = $nameParts[0] ?? '';
+    $studentProfile['last_name'] = isset($nameParts[1]) ? implode(' ', array_slice($nameParts, 1)) : '';
+    
+} catch (PDOException $e) {
+    error_log("Error fetching profile: " . $e->getMessage());
+}
+
+// Fetch statistics
+$stats = [
+    'totalVisits' => 0,
+    'prescriptions' => 0
+];
+
+try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM visit_logs WHERE patient_id = ?");
+    $stmt->execute([$user['id']]);
+    $stats['totalVisits'] = $stmt->fetch()['count'];
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM medical_records WHERE patient_id = ? AND medication IS NOT NULL");
+    $stmt->execute([$user['id']]);
+    $stats['prescriptions'] = $stmt->fetch()['count'];
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 } catch (PDOException $e) {
     error_log("Error fetching stats: " . $e->getMessage());
 }
@@ -432,11 +589,17 @@ try {
   <title>Profile Dashboard</title>
 
   <!-- CSS LINKS -->
+<<<<<<< HEAD
   <link href="css/nav.css" rel="stylesheet" />
+=======
+  <link href="../student/css/profile.css" rel="stylesheet" />
+  <link href="../student/css/nav.css" rel="stylesheet" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+<<<<<<< HEAD
   <link href="../admin/css/notifications.css" rel="stylesheet" />
   <link href="css/responsive.css" rel="stylesheet" />
   <link href="css/profile.css" rel="stylesheet" />
@@ -464,6 +627,28 @@ try {
     </div>
   </div>
 </div>
+=======
+</head>
+
+<body>
+  <div class="layout">
+    <!-- ===== HEADER ===== -->
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo">
+           <img src="../img/bsu-logo.png" alt="University Logo" />
+        </div>
+        <div class="university-name">
+          <h1>Batangas State</h1>
+          <h1>University</h1>
+        </div>
+      </div>
+      <div class="header-icons">
+        <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+        <div class="logout-icon" id="logoutBtn" onclick="window.location.href='../logout.php'"><i class="bi bi-box-arrow-right"></i></div>
+      </div>
+    </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
     <!-- ===== MAIN CONTAINER (SIDEBAR + CONTENT) ===== -->
     <div class="main-container">
@@ -471,6 +656,7 @@ try {
       <!-- ===== SIDEBAR ===== -->
       <div class="sidebar">
         <a href="../student/student_dashboard.php" class="menu-item">Dashboard</a>
+<<<<<<< HEAD
             <a href="../student/profile.php" class="menu-item active">Profile</a>
             <a href="../student/appointment.php" class="menu-item">Appointment</a>
             <a href="../student/records.php" class="menu-item">Health Records</a>
@@ -480,6 +666,12 @@ try {
           <div class="avatar"></div>
           <span><?php echo htmlspecialchars($fullName); ?></span>
         </div>
+=======
+        <a href="../student/profile.php" class="menu-item active">Profile</a>
+        <a href="../student/appointment.php" class="menu-item">Appointment</a>
+        <a href="../student/records.php" class="menu-item">Health Records</a>
+        <a href="../student/settings.php" class="menu-item">Settings</a>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       </div>
 
       <!-- ===== CONTENT AREA ===== -->
@@ -487,6 +679,10 @@ try {
         <!-- Profile Header -->
         <div class="profile-header">
           <div class="header-top">
+<<<<<<< HEAD
+=======
+            <h2 class="title">Profile Dashboard</h2>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <button id="editProfileBtn" class="btn btn-danger">
               <i class="bi bi-pencil"></i> Edit Profile
             </button>
@@ -498,12 +694,17 @@ try {
           <div class="profile-photo-section">
             <img id="profilePhoto" src="<?php echo $studentProfile['profile_photo'] ? htmlspecialchars($studentProfile['profile_photo']) : 'https://via.placeholder.com/120'; ?>" alt="Profile Photo" />
             <h3 id="fullName"><?php echo strtoupper(htmlspecialchars($studentProfile['full_name'])); ?></h3>
+<<<<<<< HEAD
+=======
+            <p class="text-secondary" id="studentId">Student ID: <?php echo htmlspecialchars($studentProfile['sr_code']); ?></p>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
           </div>
         </div>
 
         <!-- Personal Information Form -->
         <div class="profile-form-card">
           <h5 class="form-section-title">Personal Information</h5>
+<<<<<<< HEAD
           <div class="row g-3">
             <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4">
               <div class="info-item">
@@ -591,11 +792,46 @@ try {
               </div>
             </div>
           </div>
+=======
+          <form>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">First Name</label>
+                <input type="text" id="displayFirstName" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['first_name']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Last Name</label>
+                <input type="text" id="displayLastName" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['last_name']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="displayEmail" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['email']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Contact Number</label>
+                <input type="text" id="displayContact" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['contact']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date of Birth</label>
+                <input type="text" id="displayDob" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['dob']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Blood Type</label>
+                <input type="text" id="displayBloodType" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['blood_type']); ?>" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                <textarea id="displayAddress" class="form-control readonly-form" rows="2" readonly><?php echo htmlspecialchars($studentProfile['address']); ?></textarea>
+              </div>
+            </div>
+          </form>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <!-- Academic Information Form -->
         <div class="profile-form-card">
           <h5 class="form-section-title">Academic Information</h5>
+<<<<<<< HEAD
           <div class="row g-3">
             <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
               <div class="info-item">
@@ -629,11 +865,34 @@ try {
               </div>
             </div>
           </div>
+=======
+          <form>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Campus</label>
+                <input type="text" id="displayCampus" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['campus']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">College</label>
+                <input type="text" id="displayCollege" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['college']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Course</label>
+                <input type="text" id="displayCourse" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['course']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Year Level</label>
+                <input type="text" id="displayYearLevel" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['year_level']); ?>" readonly>
+              </div>
+            </div>
+          </form>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         </div>
 
         <!-- Emergency Contact Form -->
         <div class="profile-form-card">
           <h5 class="form-section-title">Emergency Contact Information</h5>
+<<<<<<< HEAD
           <div class="row g-3">
             <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4">
               <div class="info-item">
@@ -657,6 +916,32 @@ try {
         </div>
       </div>
     </div>
+=======
+          <form>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Guardian Name</label>
+                <input type="text" id="displayGuardianName" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['guardian_name']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Relationship</label>
+                <input type="text" id="displayRelationship" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['guardian_relationship']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Contact Number</label>
+                <input type="text" id="displayGuardianContact" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['guardian_contact']); ?>" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="displayGuardianEmail" class="form-control readonly-form" value="<?php echo htmlspecialchars($studentProfile['guardian_email']); ?>" readonly>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
   <!-- ======= Edit Profile Modal ======= -->
   <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileLabel" aria-hidden="true">
@@ -671,6 +956,7 @@ try {
           <div class="modal-body">
             <!-- Photo Upload -->
             <div class="text-center mb-4">
+<<<<<<< HEAD
               <div class="photo-upload-area">
                 <img id="previewPhoto" src="<?php echo $studentProfile['profile_photo'] ? htmlspecialchars($studentProfile['profile_photo']) : 'https://via.placeholder.com/120'; ?>" class="rounded-circle border border-danger mb-2" width="120" height="120" alt="Preview" />
                 <input type="file" id="photoInput" name="profile_photo" class="form-control mt-2" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" />
@@ -684,12 +970,17 @@ try {
                 <div class="file-error-message" id="fileErrorMessage"></div>
                 <div class="file-success-message" id="fileSuccessMessage"></div>
               </div>
+=======
+              <img id="previewPhoto" src="<?php echo $studentProfile['profile_photo'] ? htmlspecialchars($studentProfile['profile_photo']) : 'https://via.placeholder.com/120'; ?>" class="rounded-circle border border-danger mb-2" width="120" height="120" alt="Preview" />
+              <input type="file" id="photoInput" name="profile_photo" class="form-control mt-2" accept="image/*" />
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             </div>
 
             <!-- Personal Information -->
             <div class="info-section">
               <h6 class="section-title">Personal Information</h6>
               <div class="row g-3">
+<<<<<<< HEAD
                 <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6 col-xxl-6">
                   <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
                   <input type="text" id="firstName" name="first_name" class="form-control" placeholder="First Name" value="<?php echo htmlspecialchars($studentProfile['first_name']); ?>" required />
@@ -727,6 +1018,31 @@ try {
                   <label for="bloodType" class="form-label">Blood Type</label>
                   <select id="bloodType" name="blood_type" class="form-select">
                     <option value="">Select Blood Type</option>
+=======
+                <div class="col-md-6">
+                  <label for="firstName" class="form-label">First Name</label>
+                  <input type="text" id="firstName" name="first_name" class="form-control" placeholder="First Name" value="<?php echo htmlspecialchars($studentProfile['first_name']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="lastName" class="form-label">Last Name</label>
+                  <input type="text" id="lastName" name="last_name" class="form-control" placeholder="Last Name" value="<?php echo htmlspecialchars($studentProfile['last_name']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="email" class="form-label">Email Address</label>
+                  <input type="email" id="email" name="email" class="form-control" placeholder="Email" value="<?php echo htmlspecialchars($studentProfile['email']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="contact" class="form-label">Contact Number</label>
+                  <input type="text" id="contact" name="contact" class="form-control" placeholder="Contact Number" value="<?php echo htmlspecialchars($studentProfile['contact']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="dob" class="form-label">Date of Birth</label>
+                  <input type="date" id="dob" name="dob" class="form-control" value="<?php echo htmlspecialchars($studentProfile['dob']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="bloodType" class="form-label">Blood Type</label>
+                  <select id="bloodType" name="blood_type" class="form-select">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     <option value="O+" <?php echo $studentProfile['blood_type'] === 'O+' ? 'selected' : ''; ?>>O+</option>
                     <option value="O-" <?php echo $studentProfile['blood_type'] === 'O-' ? 'selected' : ''; ?>>O-</option>
                     <option value="A+" <?php echo $studentProfile['blood_type'] === 'A+' ? 'selected' : ''; ?>>A+</option>
@@ -738,12 +1054,17 @@ try {
                   </select>
                 </div>
                 <div class="col-12">
+<<<<<<< HEAD
                   <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
                   <input type="text" id="address" name="address" class="form-control" placeholder="Enter address" value="<?php echo htmlspecialchars($studentProfile['address']); ?>" required />
                 </div>
                 <div class="col-12">
                   <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                   <input type="email" id="email" name="email" class="form-control" placeholder="Email" value="<?php echo htmlspecialchars($studentProfile['email']); ?>" required />
+=======
+                  <label for="address" class="form-label">Address</label>
+                  <textarea id="address" name="address" class="form-control" rows="2" placeholder="Enter address"><?php echo htmlspecialchars($studentProfile['address']); ?></textarea>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 </div>
               </div>
             </div>
@@ -752,6 +1073,7 @@ try {
             <div class="info-section mt-4">
               <h6 class="section-title">Academic Information</h6>
               <div class="row g-3">
+<<<<<<< HEAD
                 <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6 col-xxl-6">
                   <label for="course" class="form-label">Course</label>
                   <input type="text" id="course" name="course" class="form-control" placeholder="Course" value="<?php echo htmlspecialchars($studentProfile['course']); ?>" />
@@ -760,6 +1082,23 @@ try {
                   <label for="yearLevel" class="form-label">Year Level</label>
                   <select id="yearLevel" name="year_level" class="form-select">
                     <option value="">Select Year Level</option>
+=======
+                <div class="col-md-6">
+                  <label for="campus" class="form-label">Campus</label>
+                  <input type="text" id="campus" name="campus" class="form-control" placeholder="Campus" value="<?php echo htmlspecialchars($studentProfile['campus']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="college" class="form-label">College</label>
+                  <input type="text" id="college" name="college" class="form-control" placeholder="College" value="<?php echo htmlspecialchars($studentProfile['college']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="course" class="form-label">Course</label>
+                  <input type="text" id="course" name="course" class="form-control" placeholder="Course" value="<?php echo htmlspecialchars($studentProfile['course']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="yearLevel" class="form-label">Year Level</label>
+                  <select id="yearLevel" name="year_level" class="form-select">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     <option value="1st Year" <?php echo $studentProfile['year_level'] === '1st Year' ? 'selected' : ''; ?>>1st Year</option>
                     <option value="2nd Year" <?php echo $studentProfile['year_level'] === '2nd Year' ? 'selected' : ''; ?>>2nd Year</option>
                     <option value="3rd Year" <?php echo $studentProfile['year_level'] === '3rd Year' ? 'selected' : ''; ?>>3rd Year</option>
@@ -769,6 +1108,7 @@ try {
               </div>
             </div>
 
+<<<<<<< HEAD
             <!-- Medical Information -->
             <div class="info-section mt-4">
               <h6 class="section-title">Medical Information</h6>
@@ -784,10 +1124,13 @@ try {
               </div>
             </div>
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             <!-- Emergency Contact -->
             <div class="info-section mt-4">
               <h6 class="section-title">Emergency Contact Information</h6>
               <div class="row g-3">
+<<<<<<< HEAD
                 <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6 col-xxl-6">
                   <label for="guardianName" class="form-label">Guardian Name</label>
                   <input type="text" id="guardianName" name="guardian_name" class="form-control" placeholder="Guardian's full name" value="<?php echo htmlspecialchars($studentProfile['guardian_name']); ?>" />
@@ -796,16 +1139,36 @@ try {
                   <label for="relationship" class="form-label">Relationship</label>
                   <select id="relationship" name="relationship" class="form-select">
                     <option value="">Select Relationship</option>
+=======
+                <div class="col-md-6">
+                  <label for="guardianName" class="form-label">Guardian Name</label>
+                  <input type="text" id="guardianName" name="guardian_name" class="form-control" placeholder="Guardian's full name" value="<?php echo htmlspecialchars($studentProfile['guardian_name']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="relationship" class="form-label">Relationship</label>
+                  <select id="relationship" name="relationship" class="form-select">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     <option value="Mother" <?php echo $studentProfile['guardian_relationship'] === 'Mother' ? 'selected' : ''; ?>>Mother</option>
                     <option value="Father" <?php echo $studentProfile['guardian_relationship'] === 'Father' ? 'selected' : ''; ?>>Father</option>
                     <option value="Guardian" <?php echo $studentProfile['guardian_relationship'] === 'Guardian' ? 'selected' : ''; ?>>Guardian</option>
                     <option value="Sibling" <?php echo $studentProfile['guardian_relationship'] === 'Sibling' ? 'selected' : ''; ?>>Sibling</option>
                   </select>
                 </div>
+<<<<<<< HEAD
                 <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6 col-xxl-6">
                   <label for="guardianContact" class="form-label">Contact Number</label>
                   <input type="text" id="guardianContact" name="guardian_contact" class="form-control" placeholder="Guardian's contact" value="<?php echo htmlspecialchars($studentProfile['guardian_contact']); ?>" />
                 </div>
+=======
+                <div class="col-md-6">
+                  <label for="guardianContact" class="form-label">Contact Number</label>
+                  <input type="text" id="guardianContact" name="guardian_contact" class="form-control" placeholder="Guardian's contact" value="<?php echo htmlspecialchars($studentProfile['guardian_contact']); ?>" />
+                </div>
+                <div class="col-md-6">
+                  <label for="guardianEmail" class="form-label">Email Address</label>
+                  <input type="email" id="guardianEmail" name="guardian_email" class="form-control" placeholder="Guardian's email" value="<?php echo htmlspecialchars($studentProfile['guardian_email']); ?>" />
+                </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </div>
             </div>
           </div>
@@ -820,18 +1183,28 @@ try {
   </div>
 
   <!-- ===== JS ===== -->
+<<<<<<< HEAD
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/notifications.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/logout.js"></script>
   <script>
+=======
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Profile data from PHP
+    const profileData = <?php echo json_encode($studentProfile, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     // ===== OPEN EDIT MODAL =====
     document.getElementById('editProfileBtn').addEventListener('click', () => {
       const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
       modal.show();
     });
 
+<<<<<<< HEAD
     // ===== PHOTO UPLOAD PREVIEW WITH VALIDATION =====
     document.getElementById('photoInput').addEventListener('change', function() {
       const file = this.files[0];
@@ -892,6 +1265,17 @@ try {
         errorMessage.classList.add('show');
       };
       
+=======
+    // ===== PHOTO UPLOAD PREVIEW =====
+    document.getElementById('photoInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('previewPhoto').src = e.target.result;
+      };
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       reader.readAsDataURL(file);
     });
 
@@ -902,6 +1286,7 @@ try {
       const formData = new FormData(this);
       formData.append('update_profile', '1');
       
+<<<<<<< HEAD
       // Show upload progress if file is being uploaded
       const photoInput = document.getElementById('photoInput');
       const uploadProgress = document.getElementById('uploadProgress');
@@ -921,12 +1306,15 @@ try {
         }, 100);
       }
       
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
       try {
         const response = await fetch('profile.php', {
           method: 'POST',
           body: formData
         });
         
+<<<<<<< HEAD
         // Complete progress bar
         if (uploadProgress.classList.contains('active')) {
           uploadProgressBar.style.width = '100%';
@@ -940,10 +1328,15 @@ try {
           uploadProgressBar.style.width = '0%';
         }, 500);
         
+=======
+        const result = await response.json();
+        
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         if (result.success) {
           const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
           modal.hide();
           
+<<<<<<< HEAD
           // Show appropriate message based on photo upload status
           let message = result.message;
           if (result.upload_error) {
@@ -954,6 +1347,12 @@ try {
             icon: 'success',
             title: 'Profile Updated!',
             text: message,
+=======
+          Swal.fire({
+            icon: 'success',
+            title: 'Profile Updated!',
+            text: result.message,
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             confirmButtonColor: '#800000'
           }).then(() => {
             location.reload(); // Reload to show updated data
@@ -967,11 +1366,14 @@ try {
         }
       } catch (error) {
         console.error('Error:', error);
+<<<<<<< HEAD
         
         // Hide progress bar on error
         uploadProgress.classList.remove('active');
         uploadProgressBar.style.width = '0%';
         
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -979,6 +1381,7 @@ try {
         });
       }
     });
+<<<<<<< HEAD
     
     // Initialize notification system
     if (window.StudentNotificationSystem) {
@@ -1075,6 +1478,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   </script>
 </body>
 </html>

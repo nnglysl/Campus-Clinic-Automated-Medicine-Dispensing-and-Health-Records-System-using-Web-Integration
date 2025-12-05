@@ -1,7 +1,10 @@
 <?php
 session_start();
 require_once '../db.php';
+<<<<<<< HEAD
 require_once '../includes/activity_logger.php';
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -11,7 +14,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 $userName = $_SESSION['fname'] . ' ' . ($_SESSION['lname'] ?? '');
 
+<<<<<<< HEAD
 // Handle Form Submissions
+=======
+// Handle Add Employee Form Submission
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
     
@@ -42,6 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit();
             }
             
+<<<<<<< HEAD
+=======
+            // Generate username from email
+            $username = explode('@', $email)[0];
+            
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             // Hash password
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
@@ -55,21 +68,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
             // Insert into employees table
             $stmt = $pdo->prepare("
+<<<<<<< HEAD
                 INSERT INTO employees (user_id, first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, password, status, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())
             ");
             $stmt->execute([
                 $user_id, $first_name, $middle_name, $last_name, $birth_date, $age, 
                 $gender, $email, $phone, $address, $role, $hashed_password
+=======
+                INSERT INTO employees (user_id, first_name, middle_name, last_name, birth_date, age, gender, email, phone, address, role, username, password, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())
+            ");
+            $stmt->execute([
+                $user_id, $first_name, $middle_name, $last_name, $birth_date, $age, 
+                $gender, $email, $phone, $address, $role, $username, $hashed_password
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             ]);
             
             $pdo->commit();
             
+<<<<<<< HEAD
             // Log activity
             $employeeName = trim($first_name . ' ' . $last_name);
             $roleName = ucfirst($role);
             logActivity($pdo, $_SESSION['user_id'], 'Add Employee', "Added new $roleName: $employeeName ($email)");
             
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             echo json_encode(['success' => true, 'message' => 'Employee added successfully']);
             exit();
             
@@ -80,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
     
+<<<<<<< HEAD
     if ($_POST['action'] === 'edit_employee') {
         try {
             // Validate input
@@ -162,11 +188,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
     
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     if ($_POST['action'] === 'update_status') {
         try {
             $employee_id = $_POST['employee_id'];
             $status = $_POST['status'];
             
+<<<<<<< HEAD
             // Get employee details for logging
             $stmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name, role FROM employees WHERE id = ?");
             $stmt->execute([$employee_id]);
@@ -181,6 +210,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 logActivity($pdo, $_SESSION['user_id'], 'Update Employee Status', "Changed status of {$employee['name']} to $statusName");
             }
             
+=======
+            $stmt = $pdo->prepare("UPDATE employees SET status = ? WHERE id = ?");
+            $stmt->execute([$status, $employee_id]);
+            
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
             exit();
             
@@ -194,8 +228,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         try {
             $employee_id = $_POST['employee_id'];
             
+<<<<<<< HEAD
             // Get employee details for logging
             $stmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name, email, role FROM employees WHERE id = ?");
+=======
+            // Get employee email
+            $stmt = $pdo->prepare("SELECT email FROM employees WHERE id = ?");
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             $stmt->execute([$employee_id]);
             $employee = $stmt->fetch();
             
@@ -212,10 +251,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt->execute([$employee_id]);
                 
                 $pdo->commit();
+<<<<<<< HEAD
                 
                 // Log activity
                 $roleName = ucfirst($employee['role'] ?? 'Employee');
                 logActivity($pdo, $_SESSION['user_id'], 'Delete Employee', "Deleted $roleName: {$employee['name']} ({$employee['email']})");
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             }
             
             echo json_encode(['success' => true, 'message' => 'Employee deleted successfully']);
@@ -229,6 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
+<<<<<<< HEAD
 // Fetch all employees - includes all staff roles (doctors, dentists, nurses, staff, employees)
 // This is for the Active/Inactive tabs in user management
 $stmt = $pdo->query("
@@ -265,6 +308,15 @@ $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
 
 // Fetch schedules for selected date - Doctors, dentists, and nurses
 // Doctors/dentists show schedules, nurses show attendance
+=======
+// Fetch all employees
+$stmt = $pdo->query("SELECT * FROM employees ORDER BY status ASC, last_name ASC");
+$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch today's schedules
+$today = date('Y-m-d');
+// Around line 90, update the SQL query to include schedule_type:
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 $stmt = $pdo->prepare("
     SELECT 
         u.id as user_id,
@@ -273,6 +325,10 @@ $stmt = $pdo->prepare("
         u.lname as last_name,
         u.email,
         u.role,
+<<<<<<< HEAD
+=======
+        u.photo,
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         ds.schedule_date,
         ds.start_time as time_in,
         ds.end_time as time_out,
@@ -281,11 +337,15 @@ $stmt = $pdo->prepare("
         ds.reason,
         att.status as current_status,
         att.time_in as last_check_in,
+<<<<<<< HEAD
         att.date as attendance_date,
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         CASE 
             WHEN att.time_in IS NOT NULL AND att.time_out IS NULL THEN 'in'
             WHEN att.time_out IS NOT NULL THEN 'out'
             ELSE 'out'
+<<<<<<< HEAD
         END as availability_status,
         DATE_FORMAT(ds.start_time, '%h:%i %p') as time_in_formatted,
         DATE_FORMAT(ds.end_time, '%h:%i %p') as time_out_formatted,
@@ -321,6 +381,20 @@ $todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Format display date
 $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
+=======
+        END as availability_status
+    FROM users u
+    LEFT JOIN doctor_schedules ds ON u.id = ds.user_id 
+        AND ds.schedule_date = ? 
+        AND ds.is_available = 1
+    LEFT JOIN attendance att ON u.id = att.user_id 
+        AND att.date = CURDATE()
+    WHERE u.role IN ('doctor', 'nurse', 'staff', 'employee')
+    ORDER BY u.lname ASC, u.fname ASC
+");
+$stmt->execute([$today]);
+$todaySchedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -329,10 +403,15 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Management</title>
   
+<<<<<<< HEAD
   <link href="../admin/css/userManagement.css" rel="stylesheet">
   <link href="/finalproject/css/nav.css" rel="stylesheet">
   <link href="../admin/css/responsive.css" rel="stylesheet">
   <link href="../admin/css/notifications.css" rel="stylesheet">
+=======
+  <link href="../admin/userManagement.css" rel="stylesheet">
+  <link href="../admin/nav.css" rel="stylesheet">
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -354,12 +433,17 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
     </div>
 
     <div class="header-icons">
+<<<<<<< HEAD
       <!-- Mobile Menu Icon -->
       <button type="button" class="mobile-menu-icon" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
         <i class="bi bi-list"></i>
       </button>
       <?php include 'notification_component.php'; ?>
       <div class="logout-icon" id="logoutBtn"><i class="bi bi-box-arrow-right"></i></div>
+=======
+      <div class="notification-icon"><i class="bi bi-bell-fill"></i></div>
+      <div class="logout-icon" onclick="logout()"><i class="bi bi-box-arrow-right"></i></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     </div>
   </div>
 
@@ -370,10 +454,18 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
         <a href="../admin/patients.php" class="menu-item">Patient</a>
         <a href="../admin/userManagement.php" class="menu-item active">User Management</a>
         <a href="../admin/inventory.php" class="menu-item">Inventory</a>
+<<<<<<< HEAD
         <a href="../admin/activity_logs.php" class="menu-item">Activity Logs</a>
         <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
       </div>
       <div class="user-profile">
+=======
+        <a href="../admin/appointmentManagement.php" class="menu-item">Appointments</a>
+        <a href="../admin/reports.php" class="menu-item">Reports & Analytics</a>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"></div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         <span><?php echo htmlspecialchars($userName); ?></span>
       </div>
     </div>
@@ -410,9 +502,15 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
           <div class="table-container">
             <!-- Filter Controls -->
             <div class="schedule-filters mb-4">
+<<<<<<< HEAD
               <div class="row align-items-end g-3">
                 <div class="col-md">
                   <label class="form-label">View Range</label>
+=======
+              <div class="row align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label fw-bold"><i class="bi bi-funnel"></i> View Range</label>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <select id="scheduleViewType" class="form-select">
                     <option value="today" selected>Today</option>
                     <option value="week">This Week</option>
@@ -421,6 +519,7 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
                     <option value="all">All Upcoming</option>
                   </select>
                 </div>
+<<<<<<< HEAD
                 <div class="col-md">
                   <label class="form-label">Department</label>
   <select id="scheduleDepartment" class="form-select">
@@ -441,6 +540,19 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
                   <label class="form-label">&nbsp;</label>
                   <button class="btn btn-primary w-100" onclick="searchSchedule()">
                     <i class="bi bi-search"></i> Search
+=======
+                <div class="col-md-3">
+                  <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Specific Date</label>
+                  <input type="date" id="scheduleDatePicker" class="form-control" value="<?php echo date('Y-m-d'); ?>">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold"><i class="bi bi-search"></i> Search Employee</label>
+                  <input type="text" id="scheduleSearch" class="form-control" placeholder="Search by name, email, or role...">
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-outline-success w-100" onclick="refreshSchedule()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   </button>
                 </div>
               </div>
@@ -449,7 +561,11 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
             <!-- Schedule Header -->
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 class="mb-0" id="scheduleDateDisplay">
+<<<<<<< HEAD
                 <i class="bi bi-calendar-week"></i> Schedule - <?php echo htmlspecialchars($displayDateFormatted); ?>
+=======
+                <i class="bi bi-calendar-week"></i> Today's Schedule - <?php echo date('l, F j, Y'); ?>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
               </h5>
               <div>
                 <span class="badge bg-primary" id="scheduleCount">
@@ -469,9 +585,19 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
                 <?php foreach ($todaySchedules as $emp): ?>
                 <div class="employee-schedule-row">
                   <div class="employee-schedule-info">
+<<<<<<< HEAD
                       <div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center">
                         <i class="bi bi-person-fill text-white" style="font-size: 1rem;"></i>
                       </div>
+=======
+                    <?php if (!empty($emp['photo'])): ?>
+                      <img src="<?php echo htmlspecialchars($emp['photo']); ?>" class="employee-photo-small" alt="<?php echo htmlspecialchars($emp['first_name']); ?>">
+                    <?php else: ?>
+                      <div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person-fill text-white" style="font-size: 1rem;"></i>
+                      </div>
+                    <?php endif; ?>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                     <div>
                       <div><strong><?php echo htmlspecialchars($emp['first_name'] . ' ' . ($emp['middle_name'] ? $emp['middle_name'] . ' ' : '') . $emp['last_name']); ?></strong></div>
                       <div class="text-muted" style="font-size: 0.85rem;">
@@ -482,6 +608,7 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
                     </div>
                   </div>
                   <div class="employee-schedule-details">
+<<<<<<< HEAD
     <?php 
     $role = strtolower($emp['role'] ?? '');
     $isDoctorOrDentist = in_array($role, ['doctor', 'dentist']);
@@ -589,6 +716,65 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
     <?php endif; ?>
   </div>
 </div>
+=======
+                    <?php if ($emp['time_in'] && $emp['is_available']): ?>
+  <?php if ($emp['schedule_type'] === 'unavailable'): ?>
+    <div class="text-center">
+      <span class="availability-badge availability-unavailable">
+        <i class="bi bi-calendar-x"></i> Unavailable
+        <?php if ($emp['reason']): ?>
+          <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.8;">
+            <?php echo htmlspecialchars($emp['reason']); ?>
+          </small>
+        <?php endif; ?>
+      </span>
+    </div>
+  <?php else: ?>
+                      <div class="schedule-table d-flex text-center">
+                        <div class="flex-fill border-end p-2">
+                          <small class="text-muted d-block">Schedule</small>
+                          <strong><?php echo date('g:i A', strtotime($emp['time_in'])); ?> - <?php echo date('g:i A', strtotime($emp['time_out'])); ?></strong>
+                        </div>
+                        <div class="flex-fill border-end p-2">
+                          <small class="text-muted d-block">Duration</small>
+                          <strong>
+                            <?php
+                            $start = new DateTime($emp['time_in']);
+                            $end = new DateTime($emp['time_out']);
+                            $diff = $start->diff($end);
+                            echo $diff->h . 'h ' . $diff->i . 'm';
+                            ?>
+                          </strong>
+                        </div>
+                        <div class="flex-fill border-end p-2">
+                          <small class="text-muted d-block">Attendance Status</small>
+                          <?php
+                          $status = $emp['availability_status'] ?? 'out';
+                          $badges = [
+                            'in' => '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
+                            'out' => '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
+                            'break' => '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
+                          ];
+                          echo $badges[$status];
+                          ?>
+                        </div>
+                        <div class="flex-fill p-2">
+                          <small class="text-muted d-block">Last Check-in</small>
+                          <strong style="font-size: 0.85rem;">
+                            <?php echo $emp['last_check_in'] ? date('g:i A', strtotime($emp['last_check_in'])) : 'N/A'; ?>
+                          </strong>
+                        </div>
+                      </div>
+                    <?php else: ?>
+  <div class="text-center">
+    <span class="availability-badge availability-unavailable">
+      <i class="bi bi-calendar-x"></i> Unavailable
+    </span>
+  </div>
+<?php endif; ?>
+                  </div>
+                </div>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                 <?php endforeach; ?>
               <?php endif; ?>
             </div>
@@ -601,6 +787,10 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
             <table id="activeUsersTable" class="display table table-striped table-hover" style="width:100%">
               <thead>
                 <tr>
+<<<<<<< HEAD
+=======
+                  <th>Photo</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
@@ -619,6 +809,10 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
             <table id="inactiveUsersTable" class="display table table-striped table-hover" style="width:100%">
               <thead>
                 <tr>
+<<<<<<< HEAD
+=======
+                  <th>Photo</th>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
@@ -635,7 +829,10 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
   </div>
 
   <!-- Add Employee Modal -->
+<<<<<<< HEAD
   <!-- Add Employee Modal -->
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
   <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -698,8 +895,12 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
                 <label class="form-label">Role *</label>
                 <select class="form-control" name="role" required>
                   <option value="">Select Role</option>
+<<<<<<< HEAD
                   <option value="doctor">Medical Doctor</option>
                   <option value="dentist">Dentist</option>
+=======
+                  <option value="doctor">Doctor</option>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
                   <option value="nurse">Nurse</option>
                   <option value="staff">Staff</option>
                 </select>
@@ -722,6 +923,7 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
     </div>
   </div>
 
+<<<<<<< HEAD
   <!-- Edit Employee Modal -->
   <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -823,5 +1025,429 @@ $displayDateFormatted = date('l, F j, Y', strtotime($displayDate));
   <script src="../admin/userManagement.js"></script>
   <script src="../js/mobile-menu.js"></script>
 
+=======
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  
+  <script>
+    const employees = <?php echo json_encode($employees); ?>;
+    
+    // Auto-refresh schedule every 30 seconds
+    let scheduleRefreshInterval;
+    let searchTimeout;
+    
+    function startScheduleRefresh() {
+      scheduleRefreshInterval = setInterval(() => {
+        const scheduleTab = document.getElementById('schedule');
+        if (scheduleTab && scheduleTab.classList.contains('active')) {
+          refreshSchedule();
+        }
+      }, 30000);
+    }
+    
+    function stopScheduleRefresh() {
+      if (scheduleRefreshInterval) {
+        clearInterval(scheduleRefreshInterval);
+      }
+    }
+    
+    // Enhanced refresh function with filters
+    function refreshSchedule() {
+      const refreshBtn = document.querySelector('.btn-outline-success');
+      const originalText = refreshBtn.innerHTML;
+      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm"></i> Refreshing...';
+      refreshBtn.disabled = true;
+      
+      const viewType = document.getElementById('scheduleViewType').value;
+      const date = document.getElementById('scheduleDatePicker').value;
+      const search = document.getElementById('scheduleSearch').value;
+      
+      let url = 'refresh_schedule.php?';
+      const params = new URLSearchParams();
+      
+      if (viewType === 'today' && date) {
+        params.append('view', 'today');
+        params.append('date', date);
+      } else {
+        params.append('view', viewType);
+      }
+      
+      if (search) {
+        params.append('search', search);
+      }
+      
+      fetch(url + params.toString())
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updateScheduleDisplay(data.schedules);
+            updateScheduleHeader(data);
+          } else {
+            console.error('Error:', data.error);
+          }
+          refreshBtn.innerHTML = originalText;
+          refreshBtn.disabled = false;
+        })
+        .catch(error => {
+          console.error('Error refreshing schedule:', error);
+          refreshBtn.innerHTML = originalText;
+          refreshBtn.disabled = false;
+        });
+    }
+    
+    // Update schedule header with count and date info
+    function updateScheduleHeader(data) {
+      document.getElementById('scheduleDateDisplay').innerHTML = 
+        `<i class="bi bi-calendar-week"></i> ${data.dateRangeInfo}`;
+      document.getElementById('scheduleCount').textContent = 
+        `${data.count} Employee(s)`;
+    }
+    
+    // Update schedule display
+    function updateScheduleDisplay(schedules) {
+      const container = document.getElementById('scheduleContainer');
+      if (!container) return;
+      
+      if (schedules.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <i class="bi bi-calendar-x" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">No schedules found</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Group schedules by date for multi-day views
+      const viewType = document.getElementById('scheduleViewType').value;
+      
+      if (viewType === 'today') {
+        // Single day view
+        container.innerHTML = schedules.map(emp => createEmployeeScheduleCard(emp)).join('');
+      } else {
+        // Multi-day view - group by date
+        const groupedByDate = {};
+        schedules.forEach(emp => {
+          if (emp.schedule_date) {
+            if (!groupedByDate[emp.schedule_date]) {
+              groupedByDate[emp.schedule_date] = [];
+            }
+            groupedByDate[emp.schedule_date].push(emp);
+          }
+        });
+        
+        const sortedDates = Object.keys(groupedByDate).sort();
+        
+        let html = '';
+        sortedDates.forEach(date => {
+          const dateObj = new Date(date + 'T00:00:00');
+          const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+          const formattedDate = dateObj.toLocaleDateString('en-US', options);
+          
+          html += `
+            <div class="mb-4">
+              <div class="date-group-header">
+                <h6 class="text-muted mb-3">
+                  <i class="bi bi-calendar3"></i> ${formattedDate}
+                  <span class="badge bg-secondary ms-2">${groupedByDate[date].length}</span>
+                </h6>
+              </div>
+          `;
+          
+          groupedByDate[date].forEach(emp => {
+            html += createEmployeeScheduleCard(emp);
+          });
+          
+          html += '</div>';
+        });
+        
+        container.innerHTML = html;
+      }
+    }
+    
+    // Create employee schedule card HTML
+    function createEmployeeScheduleCard(emp) {
+      const photoHtml = emp.photo 
+        ? `<img src="${emp.photo}" class="employee-photo-small" alt="${emp.first_name}">`
+        : `<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center">
+             <i class="bi bi-person-fill text-white" style="font-size: 1rem;"></i>
+           </div>`;
+      
+      let scheduleContent;
+      if (emp.time_in && emp.is_available) {
+        const statusBadges = {
+          'in': '<span class="availability-badge availability-in"><i class="bi bi-check-circle-fill"></i> Checked In</span>',
+          'out': '<span class="availability-badge availability-out"><i class="bi bi-x-circle-fill"></i> Not Checked In</span>',
+          'break': '<span class="availability-badge availability-break"><i class="bi bi-pause-circle-fill"></i> On Break</span>'
+        };
+        
+        scheduleContent = `
+          <div class="schedule-table d-flex text-center">
+            <div class="flex-fill border-end p-2">
+              <small class="text-muted d-block">Schedule</small>
+              <strong>${emp.time_in_formatted || 'N/A'} - ${emp.time_out_formatted || 'N/A'}</strong>
+            </div>
+            <div class="flex-fill border-end p-2">
+              <small class="text-muted d-block">Duration</small>
+              <strong>${emp.duration || 'N/A'}</strong>
+            </div>
+            <div class="flex-fill border-end p-2">
+              <small class="text-muted d-block">Attendance</small>
+              ${statusBadges[emp.availability_status] || statusBadges['out']}
+            </div>
+            <div class="flex-fill p-2">
+              <small class="text-muted d-block">Last Check-in</small>
+              <strong style="font-size: 0.85rem;">${emp.last_check_in || 'N/A'}</strong>
+            </div>
+          </div>
+        `;
+      } else {
+        scheduleContent = `
+          <div class="text-center">
+            <span class="availability-badge availability-unavailable">
+              <i class="bi bi-calendar-x"></i> Unavailable
+            </span>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="employee-schedule-row">
+          <div class="employee-schedule-info">
+            ${photoHtml}
+            <div>
+              <div><strong>${emp.first_name} ${emp.middle_name ? emp.middle_name + ' ' : ''}${emp.last_name}</strong></div>
+              <div class="text-muted" style="font-size: 0.85rem;">
+                <span class="role-badge role-${emp.role}">
+                  <i class="bi bi-person-badge-fill"></i> ${emp.role. charAt(0).toUpperCase() + emp.role.slice(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="employee-schedule-details">
+            ${scheduleContent}
+          </div>
+        </div>
+      `;
+    }
+    
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // View type change
+      document.getElementById('scheduleViewType').addEventListener('change', function() {
+        const datePicker = document.getElementById('scheduleDatePicker');
+        if (this.value === 'today') {
+          datePicker.disabled = false;
+        } else {
+          datePicker.disabled = true;
+        }
+        refreshSchedule();
+      });
+      
+      // Date picker change
+      document.getElementById('scheduleDatePicker').addEventListener('change', function() {
+        document.getElementById('scheduleViewType').value = 'today';
+        refreshSchedule();
+      });
+      
+      // Search with debounce
+      document.getElementById('scheduleSearch').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          refreshSchedule();
+        }, 500);
+      });
+    });
+    
+    // Start auto-refresh when page loads
+    startScheduleRefresh();
+    
+    // Stop refresh when navigating away
+    window.addEventListener('beforeunload', stopScheduleRefresh);
+    
+    // Initialize DataTables
+    $(document).ready(function() {
+      // Active Users Table
+      $('#activeUsersTable').DataTable({
+        data: employees.filter(e => e.status === 'active'),
+        columns: [
+          { 
+            data: 'photo',
+            render: function(data, type, row) {
+              if (data) {
+                return `<img src="${data}" class="employee-photo-small" alt="${row.first_name}">`;
+              }
+              return '<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-person-fill text-white"></i></div>';
+            }
+          },
+          { 
+            data: null,
+            render: function(data, type, row) {
+              return `${row.first_name} ${row.middle_name || ''} ${row.last_name}`.trim();
+            }
+          },
+          { data: 'email' },
+          { data: 'phone' },
+          { 
+            data: 'role',
+            render: function(data) {
+              return `<span class="role-badge role-${data}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+            }
+          },
+          { 
+            data: 'id',
+            render: function(data, type, row) {
+              return `
+                <button class="btn btn-sm btn-warning" onclick="updateStatus(${data}, 'inactive')">
+                  <i class="bi bi-pause-circle"></i> Deactivate
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${data})">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              `;
+            }
+          }
+        ]
+      });
+      
+      // Inactive Users Table
+      $('#inactiveUsersTable').DataTable({
+        data: employees.filter(e => e.status === 'inactive'),
+        columns: [
+          { 
+            data: 'photo',
+            render: function(data, type, row) {
+              if (data) {
+                return `<img src="${data}" class="employee-photo-small" alt="${row.first_name}">`;
+              }
+              return '<div class="employee-photo-small bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-person-fill text-white"></i></div>';
+            }
+          },
+          { 
+            data: null,
+            render: function(data, type, row) {
+              return `${row.first_name} ${row.middle_name || ''} ${row.last_name}`.trim();
+            }
+          },
+          { data: 'email' },
+          { data: 'phone' },
+          { 
+            data: 'role',
+            render: function(data) {
+              return `<span class="role-badge role-${data}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+            }
+          },
+          { 
+            data: 'id',
+            render: function(data) {
+              return `
+                <button class="btn btn-sm btn-success" onclick="updateStatus(${data}, 'active')">
+                  <i class="bi bi-check-circle"></i> Activate
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${data})">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              `;
+            }
+          }
+        ]
+      });
+    });
+    
+    // Submit Add Employee Form
+    function submitAddEmployee() {
+      const form = document.getElementById('addEmployeeForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const formData = new FormData(form);
+      formData.append('action', 'add_employee');
+      
+      fetch('userManagement.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error adding employee: ' + error);
+      });
+    }
+    
+    // Update Employee Status
+    function updateStatus(employeeId, status) {
+      if (!confirm(`Are you sure you want to ${status === 'active' ? 'activate' : 'deactivate'} this employee?`)) {
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('action', 'update_status');
+      formData.append('employee_id', employeeId);
+      formData.append('status', status);
+      
+      fetch('userManagement.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error updating status: ' + error);
+      });
+    }
+    
+    // Delete Employee
+    function deleteEmployee(employeeId) {
+      if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('action', 'delete_employee');
+      formData.append('employee_id', employeeId);
+      
+      fetch('userManagement.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error deleting employee: ' + error);
+      });
+    }
+    
+    // Logout Function
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        window.location.href = '/auth/logout.php';
+      }
+    }
+  </script>
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 </body>
 </html>

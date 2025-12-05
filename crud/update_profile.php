@@ -1,7 +1,10 @@
 <?php
 session_start();
 require_once(__DIR__ . '/../db.php');
+<<<<<<< HEAD
 require_once(__DIR__ . '/../includes/activity_logger.php');
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 
 header('Content-Type: application/json');
 
@@ -22,12 +25,15 @@ try {
         throw new Exception('Invalid data received');
     }
 
+<<<<<<< HEAD
     // SECURITY: Explicitly ignore role data if sent - profile updates should not change role
     if (isset($data['role'])) {
         error_log("WARNING: Role field detected in profile update request for user_id: $userId. Ignoring role data.");
         unset($data['role']); // Remove role from data to prevent accidental updates
     }
 
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     // Validate that user is updating their own profile
     if ($data['userId'] != $userId) {
         throw new Exception('Unauthorized: Cannot update another user\'s profile');
@@ -50,6 +56,7 @@ try {
         throw new Exception('Email address is already in use');
     }
 
+<<<<<<< HEAD
     // Check if user is an employee (has record in employees table)
     $stmt = $pdo->prepare("SELECT id, email FROM employees WHERE user_id = ?");
     $stmt->execute([$userId]);
@@ -62,6 +69,9 @@ try {
     // SECURITY: Explicitly exclude role from profile updates
     // Role should only be changed by admin through proper admin interface
     // Update user profile - DO NOT update role, password, or other sensitive fields
+=======
+    // Update user profile
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     $stmt = $pdo->prepare("
         UPDATE users 
         SET fname = ?, 
@@ -90,6 +100,7 @@ try {
         $userId
     ]);
 
+<<<<<<< HEAD
         if (!$result) {
             throw new Exception('Failed to update user profile');
         }
@@ -152,6 +163,9 @@ try {
         // Log profile update activity
         logActivity($pdo, $userId, 'Update Profile', 'User updated their profile information');
 
+=======
+    if ($result) {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         // Update session variables
         $_SESSION['fname'] = $data['firstName'];
         $_SESSION['lname'] = $data['lastName'];
@@ -161,10 +175,15 @@ try {
             'success' => true,
             'message' => 'Profile updated successfully'
         ]);
+<<<<<<< HEAD
     } catch (Exception $e) {
         // Rollback transaction on error
         $pdo->rollBack();
         throw $e;
+=======
+    } else {
+        throw new Exception('Failed to update profile');
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     }
 
 } catch (Exception $e) {

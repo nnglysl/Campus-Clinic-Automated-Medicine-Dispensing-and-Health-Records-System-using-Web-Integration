@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 require_once __DIR__ . '/../config/database.php';
 
 if (basename($_SERVER['PHP_SELF']) === 'calendar_api.php') {
@@ -9,6 +10,16 @@ if (basename($_SERVER['PHP_SELF']) === 'calendar_api.php') {
 define('CALENDAR_API_URL', 'https://v1.nocodeapi.com/nnglysl04/calendar/DvmKqOkWtGBolMAL');
 define('CALENDAR_ID', 'primary');
 
+=======
+
+header('Content-Type: application/json');
+
+// Calendar API Configuration
+define('CALENDAR_API_URL', 'https://v1.nocodeapi.com/nnglysl04/calendar/DvmKqOkWtGBoIMAL');
+define('CALENDAR_ID', 'primary');
+
+
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     $url = CALENDAR_API_URL . $endpoint;
     
@@ -16,6 +27,7 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
+<<<<<<< HEAD
         'Content-Type: application/json',
         'Accept: application/json'
     ]);
@@ -23,6 +35,13 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     
     if ($data !== null && ($method === 'POST' || $method === 'PUT')) {
+=======
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    
+    if ($data !== null) {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     }
     
@@ -31,6 +50,7 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     $error = curl_error($ch);
     curl_close($ch);
     
+<<<<<<< HEAD
     // Log the request and response for debugging
     error_log("Calendar API Request: {$method} {$endpoint}");
     if ($data !== null) {
@@ -41,6 +61,9 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     
     if ($error) {
         error_log("Calendar API cURL Error: " . $error);
+=======
+    if ($error) {
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         return [
             'success' => false,
             'error' => 'Connection error: ' . $error
@@ -49,6 +72,7 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
     
     $result = json_decode($response, true);
     
+<<<<<<< HEAD
     // Handle different response formats from NoCodeAPI
     if ($httpCode >= 200 && $httpCode < 300) {
         // NoCodeAPI might return the event directly or wrapped in a data property
@@ -70,11 +94,24 @@ function makeCalendarRequest($endpoint, $method = 'GET', $data = null) {
             'http_code' => $httpCode,
             'response' => $response,
             'raw_response' => $result
+=======
+    if ($httpCode >= 200 && $httpCode < 300) {
+        return [
+            'success' => true,
+            'data' => $result
+        ];
+    } else {
+        return [
+            'success' => false,
+            'error' => $result['error'] ?? 'Unknown error',
+            'http_code' => $httpCode
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
         ];
     }
 }
 
 /**
+<<<<<<< HEAD
  * Generate Google Calendar link for manual addition
  */
 function generateGoogleCalendarLink($appointmentData, $startDateTime, $endDateTime) {
@@ -419,6 +456,47 @@ function createCalendarEvent($appointmentData) {
             $appointmentData['patient_id'] ?? 'N/A',
             ucfirst($appointmentData['type']),
             $assignedPractitioner ? ucfirst($practitionerRole) . ": " . $assignedPractitioner['name'] . "\n" : "",
+=======
+ * Convert 12-hour time format to 24-hour
+ */
+function convertTo24Hour($time12h) {
+    $parts = explode(' ', $time12h);
+    $time = $parts[0];
+    $modifier = $parts[1] ?? 'AM';
+    
+    list($hours, $minutes) = explode(':', $time);
+    
+    if ($hours == 12) {
+        $hours = $modifier == 'AM' ? '00' : '12';
+    } elseif ($modifier == 'PM') {
+        $hours = str_pad((int)$hours + 12, 2, '0', STR_PAD_LEFT);
+    }
+    
+    return sprintf('%02d:%s', $hours, $minutes);
+}
+
+/**
+ * Create a calendar event
+ */
+function createCalendarEvent($appointmentData) {
+    $dateTime = $appointmentData['date'] . 'T' . convertTo24Hour($appointmentData['time']) . ':00';
+    $endDateTime = new DateTime($dateTime);
+    $endDateTime->modify('+1 hour');
+    
+    $eventData = [
+        'summary' => sprintf(
+            '%s %s - %s',
+            $appointmentData['type'] === 'medical' ? '🏥' : '🦷',
+            $appointmentData['name'],
+            strtoupper($appointmentData['type'])
+        ),
+        'location' => 'BSU Clinic, Batangas State University',
+        'description' => sprintf(
+            "Appointment Details\n\nPatient: %s\nPatient ID: %s\nType: %s\nNotes: %s",
+            $appointmentData['name'],
+            $appointmentData['patient_id'] ?? 'N/A',
+            ucfirst($appointmentData['type']),
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
             $appointmentData['notes'] ?? 'No additional notes'
         ),
         'start' => [
@@ -436,6 +514,7 @@ function createCalendarEvent($appointmentData) {
                 ['method' => 'popup', 'minutes' => 30]
             ]
         ],
+<<<<<<< HEAD
         'attendees' => $attendees,
         // Try to make patient the organizer so event appears automatically in their calendar
         // If patient email is available, set them as organizer
@@ -649,11 +728,18 @@ function createDoctorScheduleBlock($scheduleData) {
         ];
     }
     
+=======
+        'attendees' => [],
+        'sendNotifications' => true
+    ];
+    
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     return makeCalendarRequest('/event', 'POST', $eventData);
 }
 
 /**
  * Update a calendar event
+<<<<<<< HEAD
  * Can accept either appointmentData array or direct eventData array
  */
 function updateCalendarEvent($eventId, $data) {
@@ -725,14 +811,52 @@ function updateCalendarEvent($eventId, $data) {
     
     // NoCodeAPI uses /event endpoint with eventId as query parameter
     return makeCalendarRequest('/event?eventId=' . urlencode($eventId), 'PUT', $eventData);
+=======
+ */
+function updateCalendarEvent($eventId, $appointmentData) {
+    $dateTime = $appointmentData['date'] . 'T' . convertTo24Hour($appointmentData['time']) . ':00';
+    $endDateTime = new DateTime($dateTime);
+    $endDateTime->modify('+1 hour');
+    
+    $eventData = [
+        'summary' => sprintf(
+            '%s %s - %s',
+            $appointmentData['type'] === 'medical' ? '🏥' : '🦷',
+            $appointmentData['name'],
+            strtoupper($appointmentData['type'])
+        ),
+        'location' => 'BSU Clinic, Batangas State University',
+        'description' => sprintf(
+            "Appointment Details\n\nPatient: %s\nPatient ID: %s\nType: %s\nNotes: %s",
+            $appointmentData['name'],
+            $appointmentData['patient_id'] ?? 'N/A',
+            ucfirst($appointmentData['type']),
+            $appointmentData['notes'] ?? 'No additional notes'
+        ),
+        'start' => [
+            'dateTime' => $dateTime,
+            'timeZone' => 'Asia/Manila'
+        ],
+        'end' => [
+            'dateTime' => $endDateTime->format('Y-m-d\TH:i:s'),
+            'timeZone' => 'Asia/Manila'
+        ]
+    ];
+    
+    return makeCalendarRequest('/event?eventId=' . $eventId, 'PUT', $eventData);
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 }
 
 /**
  * Delete a calendar event
  */
 function deleteCalendarEvent($eventId) {
+<<<<<<< HEAD
     // NoCodeAPI uses /event endpoint (singular) for deletion
     return makeCalendarRequest('/event?eventId=' . urlencode($eventId), 'DELETE');
+=======
+    return makeCalendarRequest('/event?eventId=' . $eventId, 'DELETE');
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 }
 
 /**
@@ -744,7 +868,10 @@ function getCalendarEvents($timeMin = null, $timeMax = null) {
     if ($timeMax) $params[] = 'timeMax=' . urlencode($timeMax);
     
     $queryString = !empty($params) ? '?' . implode('&', $params) : '';
+<<<<<<< HEAD
     // NoCodeAPI uses /listEvents endpoint for listing events
+=======
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
     return makeCalendarRequest('/listEvents' . $queryString, 'GET');
 }
 
@@ -755,6 +882,7 @@ function getCalendarEvent($eventId) {
     return makeCalendarRequest('/event?eventId=' . $eventId, 'GET');
 }
 
+<<<<<<< HEAD
 /**
  * Sync all unsynced appointments to calendar
  */
@@ -906,5 +1034,68 @@ if (basename($_SERVER['PHP_SELF']) === 'calendar_api.php') {
             'error' => 'An error occurred: ' . $e->getMessage()
         ]);
     }
+=======
+// Handle API requests
+$action = $_GET['action'] ?? $_POST['action'] ?? null;
+
+if (!$action) {
+    echo json_encode(['success' => false, 'error' => 'No action specified']);
+    exit;
+}
+
+switch ($action) {
+    case 'create':
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data) {
+            echo json_encode(['success' => false, 'error' => 'Invalid data']);
+            exit;
+        }
+        $result = createCalendarEvent($data);
+        echo json_encode($result);
+        break;
+        
+    case 'update':
+        $data = json_decode(file_get_contents('php://input'), true);
+        $eventId = $_GET['eventId'] ?? $data['eventId'] ?? null;
+        
+        if (!$eventId || !$data) {
+            echo json_encode(['success' => false, 'error' => 'Invalid data or event ID']);
+            exit;
+        }
+        $result = updateCalendarEvent($eventId, $data);
+        echo json_encode($result);
+        break;
+        
+    case 'delete':
+        $eventId = $_GET['eventId'] ?? null;
+        if (!$eventId) {
+            echo json_encode(['success' => false, 'error' => 'Event ID required']);
+            exit;
+        }
+        $result = deleteCalendarEvent($eventId);
+        echo json_encode($result);
+        break;
+        
+    case 'list':
+        $timeMin = $_GET['timeMin'] ?? null;
+        $timeMax = $_GET['timeMax'] ?? null;
+        $result = getCalendarEvents($timeMin, $timeMax);
+        echo json_encode($result);
+        break;
+        
+    case 'get':
+        $eventId = $_GET['eventId'] ?? null;
+        if (!$eventId) {
+            echo json_encode(['success' => false, 'error' => 'Event ID required']);
+            exit;
+        }
+        $result = getCalendarEvent($eventId);
+        echo json_encode($result);
+        break;
+        
+    default:
+        echo json_encode(['success' => false, 'error' => 'Invalid action']);
+        break;
+>>>>>>> e3e4af906e18ab75d8fadcab962d35be6fcb7fd9
 }
 ?>
